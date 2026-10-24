@@ -2,12 +2,12 @@
   "product": "Oriva",
   "version": "1.0.0",
   "gitTag": "v1.0.0",
-  "releaseTitle": "Oriva v1.0.0 — Initial Stable Release",
+  "releaseTitle": "Oriva v1.0.0 \u2014 Initial Stable Release",
   "requestedReleaseType": "Stable",
   "repository": "https://github.com/Soiltary/Oriva",
   "repositoryVisibility": "public",
   "updateCompatibilityVersion": "2.0.0",
-  "publicationStatus": "not-published",
+  "publicationStatus": "source-published-stable-held",
   "stableGatesPassed": false,
   "productionRecoveryVerified": false
 }
