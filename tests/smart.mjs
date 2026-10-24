@@ -1,0 +1,20 @@
+import {call,b} from './accounts.mjs';
+import assert from 'node:assert/strict';
+import ts from 'typescript';import fs from 'node:fs';import vm from 'node:vm';
+const modules={};for(const name of ['duplicates','link-health']){const ctx={exports:{},URL,AbortController,setTimeout,clearTimeout};vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/'+name+'.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,ctx);modules[name]=ctx.exports}
+const {comparison,relatedLinks,duplicateGroups}=modules.duplicates,{checkInBrowser,healthStatus,publicBrowserUrl}=modules['link-health'];
+assert.equal(comparison('https://example.com/a/?utm_source=x#section').key,'https://example.com/a#section');
+assert.notEqual(comparison('https://example.com/a?p=one').key,comparison('https://example.com/a?p=two').key);
+assert.notEqual(comparison('https://example.com/a#one').key,comparison('https://example.com/a#two').key);
+const items=[{id:'a',url:'https://example.com/a?utm_source=x',kind:'link'},{id:'b',url:'https://example.com/a',kind:'link'},{id:'c',url:'https://example.com/a#one',kind:'link'}];
+assert.equal(relatedLinks(items[1].url,items).length,2);assert.equal(duplicateGroups(items).length,1);assert.equal(items[0].url,'https://example.com/a?utm_source=x');
+for(const url of ['http://127.0.0.1','http://2130706433','http://[::1]','http://localhost','http://printer.local','file:///x','https://user:pass@example.com'])assert.equal(publicBrowserUrl(url),null,url);
+for(const [code,state] of [[200,'healthy'],[404,'missing'],[410,'missing'],[403,'restricted'],[429,'rate-limited'],[302,'inconclusive'],[503,'inconclusive']])assert.equal(healthStatus(code),state);
+let called=0;await checkInBrowser('http://127.0.0.1',()=>{called++;throw Error('Must not fetch')});assert.equal(called,0);
+const result=await checkInBrowser('https://example.com',async(url,options)=>{assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.referrerPolicy,'no-referrer');assert.equal(options.method,'HEAD');return {status:403}});assert.equal(result.state,'restricted');
+assert.equal((await checkInBrowser('https://example.com',async()=>{throw Error('CORS / timeout')})).state,'inconclusive');
+const link=await call('items','POST',{url:'https://health.test'},b.cookie);assert.equal((await call('health','POST',{id:link.data.item.id,state:'restricted',http_status:403},b.cookie)).status,200);
+const other=await call('register','POST',{email:'health-isolated@example.test',password:crypto.randomUUID(),name:'Health'});assert.equal((await call('health','POST',{id:link.data.item.id,state:'missing',http_status:404},other.cookie)).status,404);
+for(let i=0;i<2;i++)await call('health','POST',{id:link.data.item.id,state:'missing',http_status:404},b.cookie);
+assert.equal((await call('health','GET',undefined,b.cookie)).data.health[0].missing_count,2);
+console.log('PASS deterministic candidate comparison, no content mutation, conservative health states, isolated reports and restricted browser request options. No external sites contacted.');

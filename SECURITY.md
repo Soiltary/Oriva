@@ -1,0 +1,5 @@
+# Security
+
+Do not disclose passwords, session/recovery tokens, provider exports, private object names, personal data or exploit details in public issues. Use a private reporting channel agreed with the repository owner; a verified dedicated security-report address is not yet configured. A public issue may request private contact without disclosing the vulnerability. Do not test against production or other users.
+
+Production authentication requires ownership checks, same-origin mutations and secure cookies. Native TLS validation and updater size/hash/path checks must remain enabled. The Windows candidate is unsigned; SHA-256 is not independent publisher authentication. Do not bypass OS security warnings. Application backups contain private plaintext content. A complete provider recovery mechanism for this Sites project has not been verified; production migration/deployment and Stable binary publication remain gated. Dependencies were patched and audited, but audit results are a time-bounded check, not a guarantee.

@@ -1,0 +1,17 @@
+import ts from 'typescript';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const source=ts.transpileModule(fs.readFileSync('app/library.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;
+const ctx={exports:{}};vm.runInNewContext(source,ctx);const matches=ctx.exports.matchesLibraryItem;
+const base={title:'Saved link',url:'https://example.com',note:'A private note',tags:['useful'],collection:'Ideas'};
+const archivedFavorite={...base,status:'archived',favorite:true};
+assert.equal(matches(archivedFavorite,'favorites','','all',''),true,'Archived starred links must appear in favorites');
+assert.equal(matches(archivedFavorite,'archive','','all',''),true,'Archiving remains intact');
+assert.equal(matches(archivedFavorite,'all','','all',''),false,'Library still excludes archive');
+assert.equal(matches({...archivedFavorite,favorite:false},'favorites','','all',''),false,'Removing star removes from favorites');
+assert.equal(matches({...base,status:'inbox',favorite:true},'favorites','','all',''),true);
+assert.equal(matches(archivedFavorite,'favorites','','reading',''),false,'Explicit status filter still works');
+assert.equal(matches(archivedFavorite,'favorites','','archived','private'),true);
+assert.equal(matches(archivedFavorite,'favorites','','all','missing'),false);
+console.log('PASS: favorites include starred archived links and respect unstar, archive, search and status filters');

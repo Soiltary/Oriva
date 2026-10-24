@@ -1,0 +1,13 @@
+import {call,context,b} from './accounts.mjs';
+import assert from 'node:assert/strict';
+const draft={url:'https://example.org/desktop-link',title:'رابط "مهم"',note:'ملاحظات من الكمبيوتر\nسطر ثاني \\ مرجع',collection:'دراسة',tags:[],status:'inbox',favorite:false};
+let result=await call('items','POST',draft,b.cookie);assert.equal(result.status,201);const id=result.data.item.id;
+assert.equal((await call('items','POST',draft,b.cookie)).status,409);
+let list=await call('items','GET',undefined,b.cookie);let item=list.data.items.find(x=>x.id===id);assert.equal(item.note,draft.note);assert.equal(item.title,draft.title);assert.equal(item.collection,'دراسة');
+result=await call('items/'+id,'PATCH',{...draft,status:'archived',favorite:true,collection:'شغل'},b.cookie);assert.equal(result.status,200);
+list=await call('items','GET',undefined,b.cookie);item=list.data.items.find(x=>x.id===id);assert.equal(item.note,draft.note);assert.equal(item.favorite,true);assert.equal(item.status,'archived');assert.equal(item.collection,'شغل');
+const data=Uint8Array.from([0,1,2,255]);const upload=await context.exports.POST(new Request('https://oriva.test/api/files',{method:'POST',headers:{cookie:b.cookie,origin:'https://oriva.test','content-type':'application/octet-stream','x-file-name':'collection.bin'},body:data}));assert.equal(upload.status,201);const file=(await upload.json()).item;
+result=await call('items/'+file.id,'PATCH',{...file,collection:'دراسة',note:'Keep file notes',favorite:true,status:'archived'},b.cookie);assert.equal(result.status,200);
+list=await call('items','GET',undefined,b.cookie);item=list.data.items.find(x=>x.id===file.id);assert.equal(item.collection,'دراسة');assert.equal(item.kind,'file');assert.equal(item.file_name,'collection.bin');assert.equal(item.file_size,4);assert.equal(item.favorite,true);assert.equal(item.status,'archived');
+result=await call('items/'+file.id,'PATCH',{...item,collection:''},b.cookie);assert.equal(result.status,200);list=await call('items','GET',undefined,b.cookie);item=list.data.items.find(x=>x.id===file.id);assert.equal(item.collection,'');assert.equal(item.note,'Keep file notes');assert.equal(item.favorite,true);assert.equal(item.status,'archived');
+console.log('PASS desktop link/collection API contract: Arabic multiline notes, duplicate rejection, file assignment, unfiled and metadata preservation');

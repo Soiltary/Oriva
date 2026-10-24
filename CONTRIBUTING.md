@@ -1,0 +1,3 @@
+# Contributing
+
+Preserve the existing Win32 and shared web architecture. Describe the trigger and expected behavior, use synthetic fixtures, fix the cause and add meaningful regression coverage. Keep patches focused. Run the documented tests/typecheck/build affected by the change. Never commit credentials, Site identity, live database/file exports, user data, runtime directories or binaries. Update English and Arabic docs together. Do not publish or activate update manifests as part of an ordinary code change. Production storage changes require a verified paired recovery copy and coordinated client rollout. Source availability does not mean the candidate is Stable.

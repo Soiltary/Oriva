@@ -1,0 +1,20 @@
+import {call,context,sql,files,b} from './accounts.mjs';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+const bytes=process.argv[2]?fs.readFileSync(process.argv[2]):Buffer.from([80,75,3,4,0,255,0,128]);
+const name=process.argv[2]?'9H(1).zip':'arbitrary-file.zip';
+async function upload(data,fileName,cookie=b.cookie,extra={}){return context.exports.POST(new Request('https://oriva.test/api/files',{method:'POST',headers:{cookie,origin:'https://oriva.test','content-type':'application/octet-stream','x-file-name':encodeURIComponent(fileName),'x-file-type':'application/zip',...extra},body:data}));}
+const r=await upload(bytes,name,b.cookie,{'x-file-title':encodeURIComponent('مكتبتي — أرشيف الأفلام')});assert.equal(r.status,201);const saved=(await r.json()).item;assert.equal(saved.kind,'file');assert.equal(saved.file_name,name);assert.equal(saved.title,'مكتبتي — أرشيف الأفلام');assert.equal(saved.file_size,bytes.length);
+const downloaded=await context.exports.GET(new Request('https://oriva.test/api/files/'+saved.id,{headers:{cookie:b.cookie}}));assert.equal(downloaded.status,200);assert.equal(downloaded.headers.get('content-type'),'application/octet-stream');assert.match(downloaded.headers.get('content-disposition'),/^attachment;/);
+assert.equal(createHash('sha256').update(Buffer.from(await downloaded.arrayBuffer())).digest('hex'),createHash('sha256').update(bytes).digest('hex'));
+const c=await call('register','POST',{email:'qa-files-c@example.test',password:crypto.randomUUID(),name:'C'});
+assert.equal((await context.exports.GET(new Request('https://oriva.test/api/files/'+saved.id,{headers:{cookie:c.cookie}}))).status,404);
+assert.equal((await upload(bytes,'file.zip','')).status,401);
+assert.equal((await upload('x','oversized.bin',b.cookie,{'content-length':String(26*1024*1024)})).status,413);
+assert.equal((await upload('harmless fixture','test.exe')).status,201,'Any extension is stored without execution');
+assert.equal((await upload(new Uint8Array(),'empty.txt')).status,201,'Empty files are valid');
+const edit=await call('items/'+saved.id,'PATCH',{url:saved.url,title:'My ZIP',note:'Saved on desktop',tags:['zip'],status:'archived',favorite:true},b.cookie);assert.equal(edit.status,200);const list=await call('items','GET',undefined,b.cookie),stored=list.data.items.find(x=>x.id===saved.id);assert.equal(stored.kind,'file');assert.equal(stored.file_name,name);assert.equal(stored.file_size,bytes.length);assert.equal(stored.favorite,true);assert.equal(stored.url,saved.url);
+assert.equal((await call('items/'+saved.id,'DELETE',{},c.cookie)).status,404);
+assert.equal((await call('items/'+saved.id,'DELETE',{},b.cookie)).status,200);assert.equal(files.has(b.data.user.id+'/files/'+saved.id),true);
+console.log('PASS: custom Arabic title without changing original filename or bytes; any file extension, actual ZIP byte-for-byte upload/download, zero-byte files, filenames, metadata edits, archive/favorites, size enforcement, private access and recoverable trash');

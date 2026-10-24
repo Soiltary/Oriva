@@ -1,0 +1,9 @@
+# Architecture
+
+Native Windows is C/Win32 using WinHTTP, DPAPI and system controls. The website is React 19/TypeScript with Next-compatible routing built by Vinext/Vite for Cloudflare Workers. D1 holds accounts/metadata/history/preferences; R2 stores private file/image bytes. Desktop and `/iphone` share the application and API. Production mutations enforce same-origin JSON, ownership and conditional revisions. There is no server-side fetch of saved-link destinations.
+
+See [architecture](architecture.md), [development](development.md) and [third-party notices](../THIRD_PARTY_NOTICES.md). The public source snapshot omits private Site identity/configuration, runtime data, compiled binaries, internal QA artifacts and staging-only delivery files. It does not publish the private development Git history.
+
+Request path: browser/native client → same-origin Worker API → owner-scoped D1 metadata and R2 objects. Each read/mutation checks the authenticated account; raw file bytes never become executable content in the API. User accounts use the application's email/password system; Sites-reserved identity paths are preserved. Account identity and private content are not embedded in public source. API code is `app/api/[...path]/route.ts`; both route pages render `app/oriva-app.tsx`. Additive SQL and schema snapshots live in drizzle/. Windows source lives in desktop/windows/.
+
+Migrations 0003–0007 add revision, workspace/history/restore/delta/health data. The existing 0004 collection backfill requires provider-scale rehearsal before publication. A live code rollback does not undo those migrations or restore deleted R2 objects. Legacy writes without revision are explicitly rejected rather than silently overwriting newer records; the rollout is not approved until old-client behavior and recovery are resolved.

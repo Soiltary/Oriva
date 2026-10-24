@@ -1,0 +1,12 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const handlers={},stored=new Map(),cache={addAll:async paths=>{for(const path of paths)stored.set(path,new Response('Public shell'))},match:async request=>stored.get(typeof request==='string'?request:new URL(request.url).pathname),put:async(request,response)=>stored.set(typeof request==='string'?request:new URL(request.url).pathname,response)};
+const caches={open:async()=>cache,keys:async()=>['unrelated-cache','oriva-public-shell-v0','oriva-public-shell-v1'],delete:async key=>{assert.equal(key,'oriva-public-shell-v0')},match:request=>cache.match(request)};
+let offline=false,networkCalls=0;const self={location:{origin:'https://oriva.test'},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn};
+vm.runInNewContext(fs.readFileSync('public/oriva-sw.js','utf8'),{self,caches,URL,Response,fetch:async request=>{networkCalls++;if(offline)throw Error('Offline');return new Response('Public asset')}});
+let task;handlers.install({waitUntil:p=>task=p});await task;handlers.activate({waitUntil:p=>task=p});await task;
+const dispatch=async(path,{method='GET',mode='cors'}={})=>{let result;handlers.fetch({request:{url:'https://oriva.test'+path,method,mode},respondWith:p=>result=p});return result?await result:null};
+assert.equal(await dispatch('/api/items'),null);assert.equal(await dispatch('/api/images/private'),null);assert.equal(await dispatch('/?private=1',{mode:'navigate'}),null);assert.equal(await dispatch('/anything',{method:'POST'}),null);
+assert.equal(networkCalls,0);await dispatch('/_next/static/test.js');assert.equal(networkCalls,1);await dispatch('/_next/static/test.js');assert.equal(networkCalls,1);
+offline=true;assert.equal(await (await dispatch('/iphone/',{mode:'navigate'})).text(),'Public shell');assert.equal(await (await dispatch('/',{mode:'navigate'})).text(),'Public shell');
+assert.ok([...stored.keys()].every(path=>!path.startsWith('/api/')));
+console.log('PASS public shell fallback, static cache reuse, no API/private-image/mutation/query caching and namespace-limited activation cleanup. Worker behavior tested in an isolated VM.');

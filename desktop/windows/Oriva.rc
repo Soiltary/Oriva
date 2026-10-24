@@ -1,0 +1,30 @@
+1 ICON "Oriva.ico"
+1 24 "Oriva.manifest"
+#include "oriva-version.h"
+1 VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+ BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+   BLOCK "040904b0"
+   BEGIN
+    VALUE "CompanyName", "Soiltary\0"
+    VALUE "FileDescription", "Oriva\0"
+    VALUE "FileVersion", ORIVA_VERSION "\0"
+    VALUE "InternalName", "Oriva\0"
+    VALUE "OriginalFilename", "Oriva.exe\0"
+    VALUE "ProductName", "Oriva\0"
+    VALUE "ProductVersion", ORIVA_VERSION "\0"
+   END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+   VALUE "Translation", 0x409, 1200
+  END
+ END

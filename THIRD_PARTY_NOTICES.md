@@ -1,0 +1,3 @@
+# Third-party notices
+
+The MIT license at the repository root covers Oriva's original source, as authorized by its owner. Third-party software retains its own license. Preserve `build/sites-vite-plugin.LICENSE` and `vendor/shadcn-tailwind-4.13.0.LICENSE.md`. The Sites/Vinext/Vite/React/Next/Cloudflare tooling and other package-managed dependencies retain the license files shipped in their packages; they are identified by package.json and pnpm-lock.yaml. Node modules and compiled vendor bundles are not redistributed as source dependencies in this snapshot. Windows uses OS libraries; the Zig toolchain is not bundled. Original project branding/product-film assets are retained from the owner-supplied project; no newly sourced external media was added.
