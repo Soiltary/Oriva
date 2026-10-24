@@ -1,6 +1,6 @@
 // Safe local regression runner. Runtime bindings/native builds are separate commands.
 import {spawnSync} from 'node:child_process';import fs from 'node:fs';import {performance} from 'node:perf_hooks';
-const names=['auth','accounts','files','favorites','desktop-links','theme','stability','workspace','backup','backup-boundaries','incremental','smart','offline','rendering','editor','editor-reliability','migrations','service-worker'];
+const names=['auth','accounts','files','favorites','desktop-links','theme','stability','workspace','backup','backup-boundaries','incremental','smart','offline','rendering','editor','editor-reliability','migrations','service-worker','release-safety'];
 const tests=[];for(const name of names){const start=performance.now(),run=spawnSync(process.execPath,['tests/'+name+'.mjs'],{encoding:'utf8',maxBuffer:2_000_000});tests.push({name,exitCode:run.status,passed:run.status===0,elapsedMs:Math.round(performance.now()-start),stdout:run.stdout||'',stderr:run.stderr||'',error:run.error?.message});console.log((run.status===0?'PASS ':'FAIL ')+name);if(run.status!==0)break}
 fs.mkdirSync('docs/evidence',{recursive:true});fs.writeFileSync('docs/evidence/regression-results.json',JSON.stringify({created:new Date().toISOString(),platform:process.platform,node:process.version,scope:'Synthetic local fixtures; API SQLite/R2 mocks, React component, crypto/IndexedDB emulator and worker VM tests. Actual D1/R2/native checks are separate.',tests},null,2)+'\n');
 if(tests.length!==names.length||tests.some(x=>!x.passed))process.exit(1);

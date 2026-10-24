@@ -2,6 +2,8 @@
 
 **No Stable Windows release or official Windows ZIP is published.** The existing unsigned x64 candidate has product/file version 1.0.0 and the intended production HTTPS host, but it is incompatible with the API currently deployed. Publishing its bytes independently on GitHub would not resolve that incompatibility.
 
+The follow-up [deployment and recovery decision](deployment-safety.md) ([العربية](deployment-safety.ar.md)) records the exact live column/migration differences, the new candidate-only write-containment flag, eight synthetic migration/recovery checks, and the remaining legacy-write and provider gates. The full regression runner now includes19 suites. This preparation has not deployed the candidate or changed production data.
+
 The existing Site's current version/source provenance was rechecked. Its API source was executed only in an isolated in-memory SQLite/R2 fixture with generated synthetic credentials and no networking. No production login, record read/write, migration or deployment occurred. The same fixture exercised the candidate API:
 
 | Contract | Current deployed source, local fixture | Candidate API, local fixture |

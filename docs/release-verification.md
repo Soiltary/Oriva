@@ -4,7 +4,7 @@ This is a source-publication and candidate-preparation record, not Stable releas
 
 | Check | Actual result |
 |---|---|
-| Regression runner | All 18 suites passed on the patched dependency stack. API fixtures, React editor, IndexedDB/crypto and worker VM checks are synthetic; they are not production tests. |
+| Regression runner | All 19 suites passed on the patched dependency stack. API fixtures, React editor, IndexedDB/crypto and worker VM checks are synthetic; they are not production tests. |
 | TypeScript and production web compilation | Passed after dependency security updates. |
 | Dependency security audit | Zero known advisories reported by the resolved dependency audit at verification time; this is not a guarantee against unknown vulnerabilities. Package lifecycle scripts were disabled during installation. |
 | Actual disposable D1/R2 | Authentication, ownership, conditional updates, quota and complete application backup/restore with a 1.1 MB multichunk file passed. |
@@ -23,3 +23,7 @@ This is a source-publication and candidate-preparation record, not Stable releas
 - No signing certificate is available. Checksums verify bytes, not publisher identity; do not describe the candidate as signed.
 
 Public source availability is independent of these production/Stable gates. No production migration, deployment, data reset, R2 deletion or active update-feed change is part of this source publication. See [backup/recovery](backup-recovery.md), [version transition](update-transition.md), [installation](installation.md) and [Arabic README](../README.ar.md).
+
+## Deployment safety follow-up
+
+The new [deployment/recovery decision](deployment-safety.md) ([العربية](deployment-safety.ar.md)) records live column inspection, eight additional synthetic migration/recovery checks, partial-migration failure and fresh-copy recovery, unsafe code-only rollback reproduction, and direct legacy-write/read contracts. Actual disposable workerd/D1/R2 also passed runtime read-only containment, exact file reads/logout and explicit resume. These local checks do not verify managed production recovery or transparent1.5.3 write compatibility.

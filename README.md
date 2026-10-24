@@ -4,6 +4,8 @@
 
 **Windows download status:** no Stable Windows package is available yet. The API compatibility gate was reproduced using isolated synthetic data; see [Windows release verification](docs/windows-release-status.md).
 
+The latest [deployment and recovery decision](docs/deployment-safety.md) records the exact schema differences, tested write containment and remaining recovery/legacy-client gates.
+
 ![Oriva](public/oriva-logo.png)
 
 **Oriva 1.0.0 is the first official release identity. This repository contains its reviewed release preparation; no Stable binary release or matching production deployment is claimed until the recovery and compatibility gates pass.** Historical 1.5.3/1.6.0 identifiers describe internal development, not earlier official public releases.

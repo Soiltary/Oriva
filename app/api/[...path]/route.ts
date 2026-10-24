@@ -82,6 +82,10 @@ async function handle(req:Request){try{
  }
  const user=await session(req);if(!user)fail('Please sign in',401);
  if(path==='logout'&&method==='POST'){const raw=req.headers.get('cookie')?.split(';').map(x=>x.trim()).find(x=>x.startsWith(cookieName+'='))?.slice(cookieName.length+1);if(raw)await db().prepare('DELETE FROM sessions WHERE token=?').bind(await digest(raw)).run();return json({ok:true},200,{'Set-Cookie':`${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`});}
+ // Non-destructive incident containment for a schema-compatible deployment.
+ // This blocks newly admitted library writes, not in-flight requests or auth.
+ // It is not a provider snapshot, drain barrier or database/file restoration.
+ if(method!=='GET'&&method!=='HEAD'&&(env as unknown as {ORIVA_LIBRARY_READ_ONLY?:string}).ORIVA_LIBRARY_READ_ONLY==='1')return json({error:'Library updates are temporarily paused. Saved content remains readable.',code:'library_read_only'},503,{'Retry-After':'300'});
  if(path==='health'&&method==='GET'){
   if(new URL(req.url).searchParams.has('summary'))return json({summary:(await db().prepare('SELECT state,COUNT(*) n FROM item_health WHERE user_id=? GROUP BY state').bind(user.id).all()).results});
   return json({health:(await db().prepare('SELECT * FROM item_health WHERE user_id=? ORDER BY checked DESC LIMIT 10000').bind(user.id).all()).results});
