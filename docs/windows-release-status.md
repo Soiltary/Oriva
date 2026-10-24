@@ -39,3 +39,7 @@ The global seven-day package-age rule remains. The already-published security fi
 رفع ملف Windows إلى GitHub وحده لا يصلح هذا التعارض. يلزم أولًا إثبات استعادة D1 وR2 المقترنة، ثم تجربة الترحيلات وتوافق العملاء، ونشر API المطابق بأمان وإكمال قبول Windows. يبقى انتقال التحديث من1.5.3 عبر ترتيب التوافق2.0.0 محفوظًا، مع بقاء رقم المنتج1.0.0. لم تتغير بيانات التحديث الحية ولم يُنشأ الوسم الرسمي.
 
 صُححت تنبيهات الاعتماديات بإصدارَي undici7.30.1 وfast-uri3.1.9، وأصبح الفحص بلا تنبيهات معروفة. بقيت قاعدة الانتظار سبعة أيام، مع استثناء موثق لإصدار fast-uri3.1.9 الأمني المحدد فقط؛ لم تُشغّل سكربتات تثبيت الحزم. صلاحية كتابة المصدر على GitHub متاحة، لكن الموصل لا يوفر عملية إنشاء Release أو رفع أصوله؛ يلزم بعد اجتياز البوابات متصفح GitHub مسجل الدخول أو ناشر معتمد بصلاحية Contents:write لهذا المستودع فقط، دون إرسال مفاتيح في المحادثة.
+
+## Final continuation
+
+The local schema-only/backfill separation proposal and immutable-history tooling are implemented and validated; see [migration rollout](migration-rollout.md) ([العربية](migration-rollout.ar.md)). The actual hosted chain remains unchanged pending provider ledger/recovery verification. The current loopback-only native test build passed15 isolation cases and real local D1/R2 smoke; the production candidate was not run, and native GUI/installed upgrade acceptance remains open.20 regression suites pass. No Stable asset, tag or new production deployment is claimed.

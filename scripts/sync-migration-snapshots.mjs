@@ -1,18 +1,15 @@
-// Development metadata only. Does not connect to D1 or execute SQL migrations.
-import fs from 'node:fs';import crypto from 'node:crypto';
-import * as schema from '../db/schema.ts';
+// Historical command name retained. Existing SQL/snapshot/journal identities
+// are verified, never regenerated: they may already have been applied.
+import fs from 'node:fs';import * as schema from '../db/schema.ts';
 import {generateSQLiteDrizzleJson,generateSQLiteMigration} from 'drizzle-kit/api';
-const final=await generateSQLiteDrizzleJson(schema),base=JSON.parse(fs.readFileSync('drizzle/meta/0002_snapshot.json','utf8'));
-let previous=base;
-for(let stage=3;stage<=7;stage++){
- const snapshot=structuredClone(previous);snapshot.prevId=previous.id;snapshot.id=crypto.randomUUID();snapshot.internal=structuredClone(final.internal);
- const fields=stage===3?['revision']:stage===4?['body','language','pinned','deleted_at','rating']:stage===5?['restore_session']:stage===6?['change_seq']:[];
- for(const field of fields)snapshot.tables.items.columns[field]=final.tables.items.columns[field];
- if(stage===3){snapshot.tables.users.columns.library_revision=final.tables.users.columns.library_revision;snapshot.tables.items.indexes.items_owner_order=final.tables.items.indexes.items_owner_order}
- if(stage===6)snapshot.tables.items.indexes.items_owner_changes=final.tables.items.indexes.items_owner_changes;
- const tables=stage===4?['collections','item_revisions','attachments','preferences']:stage===5?['restore_sessions','restore_records','restore_maps']:stage===7?['item_health']:[];
- for(const name of tables)snapshot.tables[name]=final.tables[name];
- fs.writeFileSync('drizzle/meta/'+String(stage).padStart(4,'0')+'_snapshot.json',JSON.stringify(snapshot,null,2)+'\n');previous=snapshot;
+if(process.argv.slice(2).some(x=>x!=='--check'))throw new Error('Read-only verification only; applied migration history must not be regenerated');
+const journal=JSON.parse(fs.readFileSync('drizzle/meta/_journal.json','utf8'));let previous=null;
+for(const entry of journal.entries){
+ const file='drizzle/meta/'+String(entry.idx).padStart(4,'0')+'_snapshot.json',current=JSON.parse(fs.readFileSync(file,'utf8'));
+ if(previous&&current.prevId!==previous.id)throw new Error('Broken snapshot chain: '+file);
+ if(!fs.existsSync('drizzle/'+entry.tag+'.sql'))throw new Error('Missing journal migration: '+entry.tag);previous=current;
 }
-const remaining=await generateSQLiteMigration(previous,final);if(remaining.length)throw new Error('Unexpected schema drift: '+JSON.stringify(remaining));
-console.log('PASS snapshots 0003–0007 match the final Drizzle schema; no pending schema changes. No database accessed.');
+if(!previous)throw new Error('Empty migration journal');
+const remaining=await generateSQLiteMigration(previous,await generateSQLiteDrizzleJson(schema));
+if(remaining.length)throw new Error('Append a new generated migration; existing snapshots remain immutable: '+JSON.stringify(remaining));
+console.log('PASS immutable migration snapshots/journal match current schema; no files or databases changed.');

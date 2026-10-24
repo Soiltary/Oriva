@@ -4,7 +4,7 @@ This is a source-publication and candidate-preparation record, not Stable releas
 
 | Check | Actual result |
 |---|---|
-| Regression runner | All 19 suites passed on the patched dependency stack. API fixtures, React editor, IndexedDB/crypto and worker VM checks are synthetic; they are not production tests. |
+| Regression runner | All 20 suites passed on the patched dependency stack. API fixtures, React editor, IndexedDB/crypto and worker VM checks are synthetic; they are not production tests. |
 | TypeScript and production web compilation | Passed after dependency security updates. |
 | Dependency security audit | Zero known advisories reported by the resolved dependency audit at verification time; this is not a guarantee against unknown vulnerabilities. Package lifecycle scripts were disabled during installation. |
 | Actual disposable D1/R2 | Authentication, ownership, conditional updates, quota and complete application backup/restore with a 1.1 MB multichunk file passed. |
@@ -27,3 +27,7 @@ Public source availability is independent of these production/Stable gates. No p
 ## Deployment safety follow-up
 
 The new [deployment/recovery decision](deployment-safety.md) ([العربية](deployment-safety.ar.md)) records live column inspection, eight additional synthetic migration/recovery checks, partial-migration failure and fresh-copy recovery, unsafe code-only rollback reproduction, and direct legacy-write/read contracts. Actual disposable workerd/D1/R2 also passed runtime read-only containment, exact file reads/logout and explicit resume. These local checks do not verify managed production recovery or transparent1.5.3 write compatibility.
+
+## Latest continuation
+
+All20 suites passed. The collection rollout adds10,000-row immutable-data, exact-name/timestamp, interrupted-batch, replay/resume and indexed paging checks. Actual disposable D1 passed231-row/eight-page/concurrent replay. The current native loopback-only test executable passed15 isolation cases and actual local D1/R2 login/article edit/library/file upload-download/logout; the original1.5.3 updater comparator passed again. This is headless native validation, not GUI/installer/production acceptance. [Migration preparation](migration-rollout.md) records why hosted ledger/recovery approval still blocks activation.

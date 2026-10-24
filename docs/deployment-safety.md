@@ -75,3 +75,7 @@ Preserve the existing public1.0.0 / monotonic updater2.0.0 transition. Its compa
 The owner should submit the prepared [provider request](provider-recovery-request.md) privately to Sites support: **perform or expose a project-scoped full coherent D1 schema/data plus all R2 bytes/metadata capture, privately store it, and restore it into fresh isolated resources with integrity evidence**. No direct Cloudflare access, global API key, production SQL writes or credentials in chat are requested. The provider can perform the recovery rehearsal itself. Any availability impact must be explained before capture.
 
 Once recoverability is verified: reconcile the migration ledger and bounded backfill plan; complete legacy/native/restore gates; push/save the exact reviewed source through the existing Sites project; deploy and verify its status/API; complete final Windows acceptance; publish the official release and checksums; verify actual asset bytes; only then activate download links and same-origin compatible update feeds. No official tag, Stable asset or feed has been activated by this checkpoint.
+
+## Subsequent local migration work
+
+The [collection rollout preparation](migration-rollout.md) resolves the snapshot-regeneration hazard and validates a bounded replay-safe alternative to inline backfill. It leaves the applied SQL/journal/snapshots and hosted build chain unchanged. Provider ledger and paired recovery evidence are still prerequisites for any pending repair/activation.

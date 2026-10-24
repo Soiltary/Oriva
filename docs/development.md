@@ -12,4 +12,6 @@ The private provider recovery rehearsal used only disposable local bindings. Its
 
 The public export omits optional private connector-preview and local identity emulation. It preserves Oriva’s own authentication and shared API. The public native source is the production view and refuses the private staging compiler flag rather than falling back to a production connection. Private staging guards remain intact in the private development checkout.
 
-The regression runner includes19 suites. The release-safety suite directly checks revisionless legacy writes and runtime library-write containment. `ORIVA_LIBRARY_READ_ONLY=1` is a candidate incident-containment option, not a snapshot/drain mechanism; see [deployment safety](deployment-safety.md). Never set production runtime flags as part of a local test.
+The regression runner includes20 suites. The release-safety suite directly checks revisionless legacy writes and runtime library-write containment. `ORIVA_LIBRARY_READ_ONLY=1` is a candidate incident-containment option, not a snapshot/drain mechanism; see [deployment safety](deployment-safety.md). Never set production runtime flags as part of a local test.
+
+The historical `scripts/sync-migration-snapshots.mjs` command now only verifies immutable SQL/snapshot/journal history, with optional `--check`; regeneration arguments fail. The20-suite runner verifies this, and the bounded collection proposal, on10,000 synthetic rows. See [migration preparation](migration-rollout.md). No proposal is automatically applied or packaged into the hosted chain.
