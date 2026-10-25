@@ -6,6 +6,8 @@
 
 The latest [deployment and recovery decision](docs/deployment-safety.md) records the exact schema differences, tested write containment and remaining recovery/legacy-client gates. The [collection rollout preparation](docs/migration-rollout.md) now includes a bounded, replay-safe backfill proposal and immutable history checks; production activation remains gated.
 
+The [hands-on QA follow-up](docs/qa-followup.md) fixes restore retry/localization and native Arabic logout layout, with actual interface evidence and explicit large-library limits.
+
 ![Oriva](public/oriva-logo.png)
 
 **Oriva 1.0.0 is the first official release identity. This repository contains its reviewed release preparation; no Stable binary release or matching production deployment is claimed until the recovery and compatibility gates pass.** Historical 1.5.3/1.6.0 identifiers describe internal development, not earlier official public releases.
@@ -100,7 +102,7 @@ Native source compiles with Zig 0.14.1 and Windows system libraries; commands ar
 
 ## Validation and known limits
 
-The current dependency security audit reported 0 known advisories after pinned security fixes. The 20-suite regression runner, TypeScript, web build, actual local D1/R2 authentication/concurrency/backup tests and original Windows updater comparison passed. Registration/login/refresh/logout, Arabic errors, content persistence and cross-account isolation were exercised in the actual browser before this source publication; the post-dependency browser follow-up also passed synthetic registration, login, Arabic credential errors, refresh/session persistence, logout, separate empty account isolation, saved-link persistence and language switching.
+The current dependency security audit reported 0 known advisories after pinned security fixes. The 21-suite regression runner, TypeScript, web build, actual local D1/R2 authentication/concurrency/backup tests and original Windows updater comparison passed. Registration/login/refresh/logout, Arabic errors, content persistence and cross-account isolation were exercised in the actual browser before this source publication; the post-dependency browser follow-up also passed synthetic registration, login, Arabic credential errors, refresh/session persistence, logout, separate empty account isolation, saved-link persistence and language switching.
 
 These results do not establish production migration/recovery, native installed upgrade acceptance, signing, physical-phone behavior or full maximum-size endurance. Large-library fixtures reached 10,000 items; local fixture timing is not production latency. Candidate migrations include an existing collection backfill that requires provider-scale rehearsal. Temporary restore retention/capacity policy and coordinated legacy writes remain release work. See [verification](docs/release-verification.md), [backup plan](docs/backup-recovery.md) and [changelog](CHANGELOG.md).
 

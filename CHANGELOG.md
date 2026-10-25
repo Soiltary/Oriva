@@ -2,6 +2,7 @@
 
 ## 1.0.0 — initial official release identity (preparation; unpublished)
 
+- Fix restore rollback/restage cache recovery and Arabic backup failures, plus native Arabic logout controls moving outside the resized window; add mounted and actual Win32 regression coverage.
 - Preserve the existing Win32/shared desktop-mobile application while fixing stale metadata writes, atomic quotas, URL fragments, drafts, resource naming, filtering and bounded library sync.
 - Include the verified article/snippet, backup, owner isolation, Arabic authentication and modal/editor fixes documented in the release verification report.
 - Patch audited dependency vulnerabilities and preserve pinned lockfile/supply-chain policy.

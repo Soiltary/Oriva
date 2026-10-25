@@ -31,3 +31,7 @@ The new [deployment/recovery decision](deployment-safety.md) ([العربية](d
 ## Latest continuation
 
 All20 suites passed. The collection rollout adds10,000-row immutable-data, exact-name/timestamp, interrupted-batch, replay/resume and indexed paging checks. Actual disposable D1 passed231-row/eight-page/concurrent replay. The current native loopback-only test executable passed15 isolation cases and actual local D1/R2 login/article edit/library/file upload-download/logout; the original1.5.3 updater comparator passed again. This is headless native validation, not GUI/installer/production acceptance. [Migration preparation](migration-rollout.md) records why hosted ledger/recovery approval still blocks activation.
+
+## Hands-on follow-up — 2026-10-25
+
+All21 regression suites and the hidden Win32 RTL resize fixture pass. Actual browser restore/rollback/restage and corrupt-file Arabic refusal pass. Native main-interface tests now exercise search, favorite/archive, collection grouping and Arabic logout; the large10,000-item interaction and owned-editor input limits are explicit. See [English](qa-followup.md) / [العربية](qa-followup.ar.md) for fixes, measurements and remaining gates. Earlier headless-only statements above are historical. No production or Stable publication occurred.

@@ -43,3 +43,7 @@ The global seven-day package-age rule remains. The already-published security fi
 ## Final continuation
 
 The local schema-only/backfill separation proposal and immutable-history tooling are implemented and validated; see [migration rollout](migration-rollout.md) ([العربية](migration-rollout.ar.md)). The actual hosted chain remains unchanged pending provider ledger/recovery verification. The current loopback-only native test build passed15 isolation cases and real local D1/R2 smoke; the production candidate was not run, and native GUI/installed upgrade acceptance remains open.20 regression suites pass. No Stable asset, tag or new production deployment is claimed.
+
+## Hands-on follow-up — 2026-10-25
+
+All21 regression suites and the hidden Win32 RTL resize fixture pass. Actual browser restore/rollback/restage and corrupt-file Arabic refusal pass. Native main-interface tests now exercise search, favorite/archive, collection grouping and Arabic logout; the large10,000-item interaction and owned-editor input limits are explicit. See [English](qa-followup.md) / [العربية](qa-followup.ar.md) for fixes, measurements and remaining gates. Earlier headless-only statements above are historical. No production or Stable publication occurred.
