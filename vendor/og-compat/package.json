@@ -1,0 +1,19 @@
+{
+  "name": "@oriva/og-compat",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "edge-light": "./edge.mjs",
+      "workerd": "./edge.mjs",
+      "worker": "./edge.mjs",
+      "browser": "./edge.mjs",
+      "node": "./node.mjs",
+      "default": "./edge.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": { "next": "16.4.1" }
+}

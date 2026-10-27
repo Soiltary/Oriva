@@ -1,10 +1,6 @@
 # Copied Sites are standalone projects and cannot inherit the monorepo policy.
 minimumReleaseAge: 10080
-# Exact, registry-integrity-pinned security repair; no package-wide age exemption.
-# fast-uri 3.1.9 fixes the reviewed October 2026 advisories. Other versions retain
-# the seven-day policy. This version reaches seven days on 2026-10-26 23:05 UTC.
-minimumReleaseAgeExclude:
-  - fast-uri@3.1.9
+# All pinned security fixes now meet the normal seven-day age policy.
 minimumReleaseAgeIgnoreMissingTime: false
 trustLockfile: false
 strictDepBuilds: true
@@ -42,3 +38,4 @@ overrides:
   'fflate@<0.7.5': 0.7.5
   baseline-browser-mapping: 2.11.0
   fast-uri: 3.1.9
+  '@vercel/og': file:vendor/og-compat
