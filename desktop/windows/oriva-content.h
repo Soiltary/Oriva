@@ -3,6 +3,7 @@
 #endif
 #ifndef ORIVA_CONTENT_H
 #define ORIVA_CONTENT_H
+#include "oriva-edit-notify.h"
 /* Native text remains inert Unicode data. Network work uses the existing
    serialized worker; controls and revision acknowledgements stay on UI thread. */
 #define CONTENT_FETCH 740
@@ -16,6 +17,7 @@
 static HWND contentWindow,contentTitle,contentBody,contentCollection,contentLanguage,contentState,contentSaveButton,contentHistoryList;
 static wchar_t contentId[40],contentKind[16];static ULONGLONG contentRevision,contentRestoreRevision;
 static BOOL contentLoading,contentDirty,contentBlocked,contentInitializing;
+static OEDirtyGuard contentEditGuard={&contentInitializing,&contentLoading,804};
 static char*contentPayload;
 static const wchar_t*contentText(const wchar_t*en,const wchar_t*ar){return orivaArabic?ar:en;}
 static void contentEnabled(BOOL enabled){HWND a[]={contentTitle,contentBody,contentCollection,contentLanguage,contentSaveButton,contentHistoryList};for(int i=0;i<6;i++)EnableWindow(a[i],enabled);}
@@ -49,7 +51,7 @@ static LRESULT CALLBACK contentProc(HWND h,UINT m,WPARAM w,LPARAM l){switch(m){
  linkControl(h,L"STATIC",contentText(L"Title",L"العنوان"),0,24,18,200,22,0);contentTitle=linkControl(h,L"EDIT",L"",WS_TABSTOP|WS_BORDER|ES_AUTOHSCROLL,24,42,700,32,801);SendMessageW(contentTitle,EM_SETLIMITTEXT,240,0);languageInput(contentTitle,TRUE);
  linkControl(h,L"STATIC",contentText(L"Collection",L"المجموعة"),0,24,84,320,22,0);contentCollection=linkControl(h,L"EDIT",L"",WS_TABSTOP|WS_BORDER|ES_AUTOHSCROLL,24,108,330,32,802);SendMessageW(contentCollection,EM_SETLIMITTEXT,80,0);languageInput(contentCollection,TRUE);
  linkControl(h,L"STATIC",contentText(L"Language (code stays LTR)",L"اللغة (الشيفرة من اليسار لليمين)"),0,380,84,344,22,0);contentLanguage=linkControl(h,L"EDIT",L"plaintext",WS_TABSTOP|WS_BORDER|ES_AUTOHSCROLL,380,108,344,32,803);SendMessageW(contentLanguage,EM_SETLIMITTEXT,40,0);languageInput(contentLanguage,FALSE);
- contentBody=linkControl(h,L"EDIT",L"",WS_TABSTOP|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_WANTRETURN|WS_VSCROLL|WS_HSCROLL,24,156,700,330,804);SendMessageW(contentBody,EM_SETLIMITTEXT,250000,0);languageInput(contentBody,wcscmp(contentKind,L"snippet")!=0);if(!wcscmp(contentKind,L"snippet"))SendMessageW(contentBody,WM_SETFONT,(WPARAM)GetStockObject(ANSI_FIXED_FONT),TRUE);
+ contentBody=linkControl(h,L"EDIT",L"",WS_TABSTOP|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_WANTRETURN|WS_VSCROLL|WS_HSCROLL,24,156,700,330,804);orivaTrackAccessibleEdit(contentBody,&contentEditGuard);SendMessageW(contentBody,EM_SETLIMITTEXT,250000,0);languageInput(contentBody,wcscmp(contentKind,L"snippet")!=0);if(!wcscmp(contentKind,L"snippet"))SendMessageW(contentBody,WM_SETFONT,(WPARAM)GetStockObject(ANSI_FIXED_FONT),TRUE);
  contentState=linkControl(h,L"STATIC",contentText(L"Autosaves after you pause typing.",L"يُحفظ تلقائيًا بعد توقف الكتابة"),0,24,496,700,45,0);
  contentSaveButton=linkControl(h,L"BUTTON",contentText(L"Save",L"حفظ"),WS_TABSTOP,24,550,110,34,CONTENT_SAVE);linkControl(h,L"BUTTON",contentText(L"Copy",L"نسخ"),WS_TABSTOP,145,550,105,34,CONTENT_COPY);linkControl(h,L"BUTTON",contentText(L"History",L"الإصدارات"),WS_TABSTOP,260,550,110,34,CONTENT_HISTORY);contentHistoryList=linkControl(h,L"COMBOBOX",L"",WS_TABSTOP|CBS_DROPDOWNLIST|WS_VSCROLL,380,550,170,200,0);linkControl(h,L"BUTTON",contentText(L"Restore",L"استعادة"),WS_TABSTOP,560,550,164,34,CONTENT_RESTORE);
  linkControl(h,L"BUTTON",contentText(L"Load latest",L"تحميل الأحدث"),WS_TABSTOP,24,598,200,34,CONTENT_LATEST);linkControl(h,L"BUTTON",contentText(L"Save draft as new item",L"حفظ المسودة كعنصر جديد"),WS_TABSTOP,240,598,270,34,CONTENT_SAVE_COPY);linkControl(h,L"BUTTON",contentText(L"Close",L"إغلاق"),WS_TABSTOP,560,598,164,34,IDCANCEL);contentInitializing=FALSE;SetTimer(h,1,900,NULL);return 0;}
@@ -69,6 +71,6 @@ static LRESULT CALLBACK contentProc(HWND h,UINT m,WPARAM w,LPARAM l){switch(m){
 static void contentOpen(const wchar_t*id,const wchar_t*kind){if(busy||libraryDialogOpen)return;contentId[0]=0;if(id)wcsncpy(contentId,id,39);wcsncpy(contentKind,kind,15);contentRevision=0;contentDirty=FALSE;contentLoading=FALSE;contentBlocked=FALSE;
  WNDCLASSW c={0};c.lpfnWndProc=contentProc;c.hInstance=instance;c.hCursor=LoadCursorW(NULL,IDC_ARROW);c.hbrBackground=bg;c.hIcon=smallIcon;c.lpszClassName=L"OrivaContentEditor";RegisterClassW(&c);libraryDialogOpen=TRUE;EnableWindow(window,FALSE);RECT parent;GetWindowRect(window,&parent);int editorX=(parent.left+parent.right-768)/2,editorY=(parent.top+parent.bottom-700)/2;
  MONITORINFO monitor={sizeof(monitor)};if(GetMonitorInfoW(MonitorFromWindow(window,MONITOR_DEFAULTTONEAREST),&monitor)){if(editorX+768>monitor.rcWork.right)editorX=monitor.rcWork.right-768;if(editorY+700>monitor.rcWork.bottom)editorY=monitor.rcWork.bottom-700;if(editorX<monitor.rcWork.left)editorX=monitor.rcWork.left;if(editorY<monitor.rcWork.top)editorY=monitor.rcWork.top;}
- HWND h=CreateWindowExW(WS_EX_DLGMODALFRAME|(orivaArabic?WS_EX_LAYOUTRTL:0),c.lpszClassName,!wcscmp(kind,L"snippet")?contentText(L"Oriva - Code snippet",L"Oriva - مقتطف برمجي"):contentText(L"Oriva - Article",L"Oriva - مقال"),WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU,editorX,editorY,768,700,window,NULL,instance,NULL);if(!h){libraryDialogOpen=FALSE;EnableWindow(window,TRUE);return;}
+ HWND h=CreateWindowExW(WS_EX_APPWINDOW|WS_EX_DLGMODALFRAME|(orivaArabic?WS_EX_LAYOUTRTL:0),c.lpszClassName,!wcscmp(kind,L"snippet")?contentText(L"Oriva - Code snippet",L"Oriva - مقتطف برمجي"):contentText(L"Oriva - Article",L"Oriva - مقال"),WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU,editorX,editorY,768,700,window,NULL,instance,NULL);if(!h){libraryDialogOpen=FALSE;EnableWindow(window,TRUE);return;}
  ShowWindow(h,SW_SHOW);if(id){contentLoading=TRUE;contentEnabled(FALSE);SetWindowTextW(contentState,contentText(L"Loading the complete document...",L"تحميل المستند كاملًا…"));start(CONTENT_FETCH);}else SetFocus(contentTitle);}
 #endif

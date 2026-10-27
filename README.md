@@ -102,7 +102,7 @@ Native source compiles with Zig 0.14.1 and Windows system libraries; commands ar
 
 ## Validation and known limits
 
-The current dependency security audit reported 0 known advisories after pinned security fixes. The 21-suite regression runner, TypeScript, web build, actual local D1/R2 authentication/concurrency/backup tests and original Windows updater comparison passed. Registration/login/refresh/logout, Arabic errors, content persistence and cross-account isolation were exercised in the actual browser before this source publication; the post-dependency browser follow-up also passed synthetic registration, login, Arabic credential errors, refresh/session persistence, logout, separate empty account isolation, saved-link persistence and language switching.
+The earlier zero-advisory audit is historical; the latest [security follow-up](docs/native-verification.md) records a newly disclosed Satori advisory and a rejected runtime-breaking upgrade. The 22-suite regression runner, TypeScript, web build, actual local D1/R2 authentication/concurrency/backup tests and original Windows updater comparison passed. Registration/login/refresh/logout, Arabic errors, content persistence and cross-account isolation were exercised in the actual browser before this source publication; the post-dependency browser follow-up also passed synthetic registration, login, Arabic credential errors, refresh/session persistence, logout, separate empty account isolation, saved-link persistence and language switching.
 
 These results do not establish production migration/recovery, native installed upgrade acceptance, signing, physical-phone behavior or full maximum-size endurance. Large-library fixtures reached 10,000 items; local fixture timing is not production latency. Candidate migrations include an existing collection backfill that requires provider-scale rehearsal. Temporary restore retention/capacity policy and coordinated legacy writes remain release work. See [verification](docs/release-verification.md), [backup plan](docs/backup-recovery.md) and [changelog](CHANGELOG.md).
 
@@ -120,3 +120,5 @@ Oriva's original source is licensed under the [MIT License](LICENSE), selected b
 
 
 The public export omits optional private connector-preview and local identity emulation. It preserves Oriva’s own authentication and shared API. The public native source is the production view and refuses the private staging compiler flag rather than falling back to a production connection. Private staging guards remain intact in the private development checkout.
+
+Latest [native verification and security limits](docs/native-verification.md).

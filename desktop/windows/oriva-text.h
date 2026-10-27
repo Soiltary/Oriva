@@ -167,6 +167,14 @@ static const OrivaText orivaTexts[]={
 {L"Library changed during sync. Please sync again.",L"تغيّرت المكتبة أثناء المزامنة. أعد المزامنة"},
 {L"Could not synchronize every page. Your previous library was kept. Please sync again.",L"تعذرت مزامنة كل الصفحات. احتُفظ بمكتبتك السابقة. أعد المحاولة"},
 {L"+ New",L"+ جديد"},
+{L"Previous",L"السابق"},
+{L"Next",L"التالي"},
+{L"Page %d / %d",L"صفحة %d / %d"},
+{L"%d items matched / %d saved in your account",L"%d عنصر مطابق / %d محفوظ في حسابك"},
+{L"Could not prepare the list. Your saved library is unchanged.",L"تعذر إعداد القائمة. لم تتغير مكتبتك المحفوظة."},
+{L"Oriva could not restart. The previous version was restored.",L"تعذرت إعادة تشغيل Oriva. أُعيد الإصدار السابق."},
+{L"Oriva could not restart. Keep the previous executable for recovery and reopen Oriva manually.",L"تعذرت إعادة تشغيل Oriva. احتفظ بالملف التنفيذي السابق للاستعادة وافتح Oriva يدويًا."},
+{L"Update Oriva before changing this item. Your saved content is unchanged.",L"حدّث Oriva قبل تعديل هذا العنصر. لم يتغير المحتوى المحفوظ. يمكنك استخدام الموقع حتى اكتمال التحديث."},
 };
 static const wchar_t*tr(const wchar_t*text){if(!orivaArabic||!text)return text;for(unsigned i=0;i<sizeof(orivaTexts)/sizeof(orivaTexts[0]);i++)if(!wcscmp(text,orivaTexts[i].en))return orivaTexts[i].ar;return text;}
 static const wchar_t*orivaRetranslate(const wchar_t*text){if(!text)return text;for(unsigned i=0;i<sizeof(orivaTexts)/sizeof(orivaTexts[0]);i++)if(!wcscmp(text,orivaTexts[i].en)||!wcscmp(text,orivaTexts[i].ar))return orivaArabic?orivaTexts[i].ar:orivaTexts[i].en;return text;}
