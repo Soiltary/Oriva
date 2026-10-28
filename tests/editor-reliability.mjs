@@ -1,4 +1,4 @@
-import {call,context,b} from './accounts.mjs';
+import {call,context,b,sql} from './accounts.mjs';
 import React from 'react';import TestRenderer,{act} from 'react-test-renderer';
 import ts from 'typescript';import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
@@ -8,7 +8,7 @@ scope.fetch=(path,options)=>new Promise(resolve=>pending.push(async()=>{const re
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/content-editor.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,scope);
 const Editor=scope.exports.default,body=()=>view.root.findByType('textarea'),button=text=>view.root.findAllByType('button').find(x=>x.children.join('')===text);
 const check=(name,condition)=>{results.push({name,passed:!!condition});console.log((condition?'PASS ':'FAIL ')+name);fs.mkdirSync('docs/evidence',{recursive:true});fs.writeFileSync('docs/evidence/editor-reliability-results.json',JSON.stringify({scope:'Mounted React editor with deferred real synthetic API handlers; not a GUI test.',results},null,2)+'\n')};
-async function mount(item){await act(async()=>{view=TestRenderer.create(React.createElement(Editor,{item,kind:'article',lang:'en',owner:b.data.user.id,collections:[],onClose:()=>closed++,onSaved(){}}))})}
+async function mount(item,lang='en'){await act(async()=>{view=TestRenderer.create(React.createElement(Editor,{item,kind:'article',lang,owner:b.data.user.id,collections:[],onClose:()=>closed++,onSaved(){}}))})}
 await mount(null);
 await act(async()=>{view.root.findAllByType('input')[0].props.onChange({target:{value:'Reliability fixture'}});body().props.onChange({target:{value:'Initial body'}})});
 check('new edited draft reports Unsaved changes',JSON.stringify(view.toJSON()).includes('Unsaved changes'));
@@ -30,6 +30,15 @@ await act(async()=>{await pending.shift()();await Promise.resolve()});
 check('latest recovered text persists with revision CAS',(await call('items/'+createdItem.id,'GET',undefined,b.cookie)).data.item.body==='Typing continued while the initial POST was pending');
 await act(async()=>body().props.onChange({target:{value:'Another unsaved edit'}}));
 check('existing edited draft reports Unsaved changes immediately',JSON.stringify(view.toJSON()).includes('Unsaved changes'));
+await act(async()=>view.unmount());
+timers.clear();drafts.clear();sql.prepare('UPDATE storage_usage SET metadata_bytes=? WHERE user_id=?').run(32*1024*1024-10,b.data.user.id);
+await mount((await call('items/'+createdItem.id,'GET',undefined,b.cookie)).data.item,'ar');
+await act(async()=>body().props.onChange({target:{value:'مسودة محفوظة محليًا عند امتلاء الحصة'}}));
+await act(async()=>{const callbacks=[...timers.values()];timers.clear();callbacks.forEach(callback=>callback())});assert.equal(pending.length,1);
+await act(async()=>{await pending.shift()();await Promise.resolve()});
+check('quota failure is Arabic and keeps the unsaved draft',JSON.stringify(view.toJSON()).includes('حد 32 MiB')&&body().props.value==='مسودة محفوظة محليًا عند امتلاء الحصة');
+await act(async()=>{const callbacks=[...timers.values()];timers.clear();callbacks.forEach(callback=>callback())});
+check('quota failure blocks automatic retry loops and retains local draft',pending.length===0&&[...drafts.values()].some(value=>value.includes('مسودة محفوظة')));
 await act(async()=>view.unmount());
 fs.mkdirSync('docs/evidence',{recursive:true});fs.writeFileSync('docs/evidence/editor-reliability-results.json',JSON.stringify({scope:'Mounted React editor with deferred real synthetic API handlers; not a GUI test.',results},null,2)+'\n');
 assert.ok(results.every(result=>result.passed),'Editor reliability regressions failed');

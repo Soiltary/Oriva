@@ -29,6 +29,20 @@ cache.set(key,crypto.randomUUID());await remount();previous=starts();await act(a
 const resumable=cache.get(key);previewFault=500;await remount();previous=starts();await act(async()=>button('Stage or resume restore').props.onClick());await idle();assert.equal(starts(),previous);assert.equal(cache.get(key),resumable);assert.ok(view.root.findByProps({role:'alert'}));
 previewFault=0;await act(async()=>button('Stage or resume restore').props.onClick());await idle();assert.equal(starts(),previous);assert.ok(button('Recoverable rollback'));
 previewFault=401;await remount('ar');await act(async()=>button('تحضير الاستعادة أو استئنافها').props.onClick());await idle();assert.equal(starts(),previous);assert.ok(view.root.findByProps({role:'alert'}).children.join('').includes('انتهت جلسة الدخول'));assert.equal(cache.get(key),resumable);
-previewFault=0;cache.clear();storageBlocked=true;await remount('ar');await act(async()=>button('تحضير الاستعادة أو استئنافها').props.onClick());await idle();assert.equal(starts(),previous+1);assert.ok(button('التراجع القابل للاستعادة'));assert.equal(view.root.findAllByProps({role:'alert'}).length,0);
+previewFault=0;cache.clear();storageBlocked=true;await remount('ar');await act(async()=>button('تحضير الاستعادة أو استئنافها').props.onClick());await idle();assert.equal(starts(),previous+1);assert.ok(view.root.findByProps({role:'alert'}).children.join('').includes('جلستا استعادة'));
+// The new visible staging manager recovers abandoned sessions without hidden
+// quota resets. Explicitly advance the isolated API clock past the rate window.
+await act(async()=>button('إدارة بيانات الاستعادة المرحلية').props.onClick());await idle();assert.ok(button('إلغاء التحضير وتنظيفه'));
+await act(async()=>button('إلغاء التحضير وتنظيفه').props.onClick());await idle();
+vm.runInNewContext('Date.now=()=>'+(Date.now()+901000),context);
+await act(async()=>button('تحضير الاستعادة أو استئنافها').props.onClick());await idle();assert.equal(starts(),previous+2);assert.ok(button('التراجع القابل للاستعادة'));assert.equal(view.root.findAllByProps({role:'alert'}).length,0);
 const bad=new File([serialized+'\n'+JSON.stringify({type:'end',records:1,sha256:'bad'})+'\n'],'invalid-synthetic.oriva');await act(async()=>view.root.findAllByType('input').find(x=>x.props.type==='file').props.onChange({target:{files:[bad]}}));await idle();assert.ok(view.root.findByProps({role:'alert'}).children.join('').includes('فشل التحقق من سلامة'));assert.equal(button('تحضير الاستعادة أو استئنافها'),undefined);
-await act(async()=>view.unmount());console.log('PASS mounted backup panel: rollback/restage and old rolled-back/404 caches recover; complete resumes;500/401 preserve session without duplicate starts; Arabic errors; blocked storage fallback; corrupt backup refused.');
+// The actual mounted Arabic manager exposes quota, confirmed trash deletion
+// and explicit unused-upload cleanup using the same authenticated API.
+const disposable=(await call('items','POST',{url:'https://panel.test/disposable',title:'Synthetic trash'},b.cookie)).data.item;
+assert.equal((await call('items/'+disposable.id,'DELETE',{revision:disposable.revision},b.cookie)).status,200);
+await act(async()=>button('إدارة مساحة الحساب والسلة').props.onClick());await idle();assert.ok(JSON.stringify(view.toJSON()).includes('Synthetic trash'));
+scope.window.confirm=()=>false;const deletes=requests.filter(x=>x.url.startsWith('/api/storage/trash/')).length;
+await act(async()=>button('حذف نهائي من السلة والسجل').props.onClick());await idle();assert.equal(requests.filter(x=>x.url.startsWith('/api/storage/trash/')).length,deletes);
+scope.window.confirm=()=>true;await act(async()=>button('حذف نهائي من السلة والسجل').props.onClick());await idle();assert.equal(requests.filter(x=>x.url.startsWith('/api/storage/trash/')).length,deletes+1);assert.ok(!JSON.stringify(view.toJSON()).includes('Synthetic trash'));
+await act(async()=>view.unmount());console.log('PASS mounted backup panel: rollback/restage, cached sessions, Arabic errors, staging cleanup, quota display and explicitly confirmed trash deletion; corrupt backup refused.');

@@ -1,6 +1,3 @@
-#ifdef ORIVA_STAGING_ONLY
-#error "Private staging tooling is excluded from this public source export; refusing this build configuration."
-#endif
 #ifndef ORIVA_CONTENT_H
 #define ORIVA_CONTENT_H
 #include "oriva-edit-notify.h"
@@ -33,7 +30,7 @@ static void contentSubmit(){
 static void contentResult(int job,DWORD code,const char*response){
  if(!contentWindow)return;contentLoading=FALSE;contentEnabled(TRUE);
  int count=0;OJToken*t=response?ojParse(response,&count):NULL;
- if(code!=200&&code!=201){contentBlocked=job!=CONTENT_FETCH;SetWindowTextW(contentState,code==409?contentText(L"Conflict: your draft is kept. Load latest or save a new copy.",L"تعارض: احتُفظ بالمسودة. حمّل الأحدث أو احفظ نسخة جديدة"):contentText(L"Sync failed. Your draft is kept. Click Save to retry.",L"تعذرت المزامنة. احتُفظ بالمسودة. اضغط حفظ للمحاولة"));free(t);return;}
+ if(code!=200&&code!=201){contentBlocked=job!=CONTENT_FETCH;SetWindowTextW(contentState,code==413?contentText(L"Storage allowance reached. Your draft is kept. Manage storage on the website before retrying.",L"بلغت حصة التخزين. احتُفظ بالمسودة. أدر المساحة من الموقع ثم أعد الحفظ"):code==409?contentText(L"Conflict: your draft is kept. Load latest or save a new copy.",L"تعارض: احتُفظ بالمسودة. حمّل الأحدث أو احفظ نسخة جديدة"):contentText(L"Sync failed. Your draft is kept. Click Save to retry.",L"تعذرت المزامنة. احتُفظ بالمسودة. اضغط حفظ للمحاولة"));free(t);return;}
  if(!t||!count){SetWindowTextW(contentState,contentText(L"Invalid response. Your draft is kept.",L"استجابة غير صالحة. احتُفظ بالمسودة"));contentBlocked=TRUE;free(t);return;}
  if(job==CONTENT_HISTORY){SendMessageW(contentHistoryList,CB_RESETCONTENT,0,0);int a=ojField(response,t,0,"revisions");if(a>=0&&t[a].type=='[')for(int i=a+1;i<t[a].next;i=t[i].next){int field=ojField(response,t,i,"revision");char*n=field>=0?ojRaw(response,t,field):NULL;if(n){ULONGLONG revision=strtoull(n,NULL,10);wchar_t label[80];swprintf(label,80,contentText(L"Revision %llu",L"الإصدار %llu"),revision);LRESULT row=SendMessageW(contentHistoryList,CB_ADDSTRING,0,(LPARAM)label);SendMessageW(contentHistoryList,CB_SETITEMDATA,row,(LPARAM)revision);free(n);}}SendMessageW(contentHistoryList,CB_SETCURSEL,0,0);free(t);return;}
  int item=ojField(response,t,0,"item");if(item<0||t[item].type!='{'){free(t);return;}
@@ -72,5 +69,8 @@ static void contentOpen(const wchar_t*id,const wchar_t*kind){if(busy||libraryDia
  WNDCLASSW c={0};c.lpfnWndProc=contentProc;c.hInstance=instance;c.hCursor=LoadCursorW(NULL,IDC_ARROW);c.hbrBackground=bg;c.hIcon=smallIcon;c.lpszClassName=L"OrivaContentEditor";RegisterClassW(&c);libraryDialogOpen=TRUE;EnableWindow(window,FALSE);RECT parent;GetWindowRect(window,&parent);int editorX=(parent.left+parent.right-768)/2,editorY=(parent.top+parent.bottom-700)/2;
  MONITORINFO monitor={sizeof(monitor)};if(GetMonitorInfoW(MonitorFromWindow(window,MONITOR_DEFAULTTONEAREST),&monitor)){if(editorX+768>monitor.rcWork.right)editorX=monitor.rcWork.right-768;if(editorY+700>monitor.rcWork.bottom)editorY=monitor.rcWork.bottom-700;if(editorX<monitor.rcWork.left)editorX=monitor.rcWork.left;if(editorY<monitor.rcWork.top)editorY=monitor.rcWork.top;}
  HWND h=CreateWindowExW(WS_EX_APPWINDOW|WS_EX_DLGMODALFRAME|(orivaArabic?WS_EX_LAYOUTRTL:0),c.lpszClassName,!wcscmp(kind,L"snippet")?contentText(L"Oriva - Code snippet",L"Oriva - مقتطف برمجي"):contentText(L"Oriva - Article",L"Oriva - مقال"),WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU,editorX,editorY,768,700,window,NULL,instance,NULL);if(!h){libraryDialogOpen=FALSE;EnableWindow(window,TRUE);return;}
+#ifdef ORIVA_STAGING_ONLY
+ SetWindowTextW(h,!wcscmp(kind,L"snippet")?L"Oriva STAGING ONLY — Code snippet":L"Oriva STAGING ONLY — Article");
+#endif
  ShowWindow(h,SW_SHOW);if(id){contentLoading=TRUE;contentEnabled(FALSE);SetWindowTextW(contentState,contentText(L"Loading the complete document...",L"تحميل المستند كاملًا…"));start(CONTENT_FETCH);}else SetFocus(contentTitle);}
 #endif

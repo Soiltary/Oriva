@@ -2,6 +2,8 @@
 
 # Oriva
 
+Current first-release limits, verified recovery and remaining gates: [storage and recovery status](docs/storage-recovery-status.md).
+
 **Windows download status:** no Stable Windows package is available yet. The API compatibility gate was reproduced using isolated synthetic data; see [Windows release verification](docs/windows-release-status.md).
 
 The latest [deployment and recovery decision](docs/deployment-safety.md) records the exact schema differences, tested write containment and remaining recovery/legacy-client gates. The [collection rollout preparation](docs/migration-rollout.md) now includes a bounded, replay-safe backfill proposal and immutable history checks; production activation remains gated.

@@ -29,8 +29,16 @@ const insert=sql.prepare('INSERT INTO items (id,user_id,url,title,note,tags,coll
 sql.exec('BEGIN');for(let i=count;i<9999;i++)insert.run(crypto.randomUUID(),b.data.user.id,'https://quota.test/'+i,'Quota','','[]','','inbox',0,1,1);sql.exec('COMMIT');
 const concurrent=await Promise.all([call('items','POST',{url:'https://quota.test/a'},b.cookie),call('items','POST',{url:'https://quota.test/b'},b.cookie)]);
 assert.deepEqual(concurrent.map(x=>x.status).sort(),[201,422]);assert.equal(sql.prepare('SELECT COUNT(*) n FROM items WHERE user_id=?').get(b.data.user.id).n,10000);
-// Legacy oversized reads fail explicitly; paginated reads retain every full note.
-sql.prepare('UPDATE items SET note=? WHERE user_id=?').run('n'.repeat(12000),b.data.user.id);
-assert.equal((await raw('items')).status,426);
-const large=await raw('library?limit=100');assert.equal(large.status,200);assert.equal(large.data.items[0].note.length,12000);
+// Keep the10k fixture inside the approved32MiB account allowance, while still
+// testing the maximum individual note and oversized legacy response guard.
+sql.prepare('UPDATE items SET note=? WHERE user_id=?').run('n'.repeat(700),b.data.user.id);
+const maximumNoteId=concurrent.find(x=>x.status===201).data.item.id;
+sql.prepare('UPDATE items SET note=? WHERE id=?').run('n'.repeat(12000),maximumNoteId);
+assert.equal((await raw('items')).status,200,'The quota-bounded fixture fits the defensive legacy read envelope');
+// A pre-v1 development account can exceed the new quota. Exercise its bounded
+// read contract through a synthetic database budget result, without disabling
+// quota enforcement or creating120MiB of unsupported new-customer content.
+const originalDB=context.__env.DB;context.__env.DB={...originalDB,prepare(query){if(query.startsWith('SELECT COUNT(*) n,COALESCE(SUM(length(CAST(json_quote(note)'))return {bind(){return this},async first(){return {n:10000,bytes:24*1024*1024+1}}};return originalDB.prepare(query)}};
+try{assert.equal((await raw('items')).status,426)}finally{context.__env.DB=originalDB;}
+const large=await raw('library?limit=100');assert.equal(large.status,200);assert.equal(large.data.items.find(x=>x.id===maximumNoteId).note.length,12000);
 console.log('PASS revisions, narrow fields, legacy safe rejection, fragments/hash routes/queries, cursor consistency, unchanged sync, atomic quota and complete large notes.');

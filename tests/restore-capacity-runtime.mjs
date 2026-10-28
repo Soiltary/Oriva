@@ -6,7 +6,8 @@ const script=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ES
 const options={modules:true,script,compatibilityDate:'2026-05-15',d1Databases:['DB'],r2Buckets:['BUCKET'],outboundService:()=>new Response('Outbound denied',{status:403})},mf=new Miniflare(options),origin='https://oriva.test';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 try{
- const db=await mf.getD1Database('DB');for(const file of fs.readdirSync('drizzle').filter(x=>x.endsWith('.sql')).sort())for(const sql of fs.readFileSync('drizzle/'+file,'utf8').split('--> statement-breakpoint'))if(sql.trim())await db.prepare(sql).run();
+ const db=await mf.getD1Database('DB'),statements=process.argv.includes('--fresh-schema')?(await (await import('../scripts/first-release-schema.mjs')).firstReleaseSchema()).statements:fs.readdirSync('drizzle').filter(x=>x.endsWith('.sql')).sort().flatMap(file=>fs.readFileSync('drizzle/'+file,'utf8').split('--> statement-breakpoint'));
+ for(const sql of statements)if(sql.trim())await db.prepare(sql).run();
  const send=async(route,method='GET',body,cookie='')=>{const r=await mf.dispatchFetch(origin+'/api/'+route,{method,headers:{origin,'content-type':'application/json',cookie},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]}};
  const password='Synthetic-max-file-only!',owner=await send('register','POST',{email:'capacity-source@example.test',password});assert.equal(owner.status,201);
  const bytes=Uint8Array.from({length:25*1024*1024},(_,i)=>i%251),expectedHash=hash(bytes);

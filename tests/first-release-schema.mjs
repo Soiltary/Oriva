@@ -1,0 +1,11 @@
+import {firstReleaseSchema} from '../scripts/first-release-schema.mjs';import {DatabaseSync} from 'node:sqlite';import assert from 'node:assert/strict';import fs from 'node:fs';import {createHash} from 'node:crypto';
+const files=fs.readdirSync('drizzle').filter(x=>x.endsWith('.sql')).map(x=>'drizzle/'+x).concat(fs.readdirSync('drizzle/meta').map(x=>'drizzle/meta/'+x));
+const fingerprints=()=>files.map(x=>createHash('sha256').update(fs.readFileSync(x)).digest('hex'));
+const before=fingerprints(),result=await firstReleaseSchema();assert.equal(result.productVersion,'1.0.0');assert.equal(result.deploymentAuthorized,false);assert.equal(result.target,'verified-empty-database-only');
+const db=new DatabaseSync(':memory:');assert.equal(db.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type='table'").get().n,0);
+for(const sql of result.statements)db.exec(sql);
+assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE name='restore_admissions'").get());assert.ok(db.prepare('PRAGMA table_info(restore_sessions)').all().some(x=>x.name==='cleanup_state'));
+assert.equal(db.prepare('SELECT COUNT(*) n FROM users').get().n,0);assert.equal(db.prepare('SELECT COUNT(*) n FROM items').get().n,0);assert.equal(db.prepare('SELECT COUNT(*) n FROM collections').get().n,0);
+assert.ok(result.statements.every(x=>!/^\s*(?:INSERT|UPDATE|DELETE|DROP|ALTER)\b/i.test(x)));assert.deepEqual(fingerprints(),before);
+assert.equal(db.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type='table'").get().n,15);
+console.log('PASS fresh v1.0.0 schema generated directly from existing model: no development seeds/backfill,15 empty tables, quota accounting triggers and restore policy columns; historical migrations untouched, no deployment.');

@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `purge_revision` integer DEFAULT 0 NOT NULL;

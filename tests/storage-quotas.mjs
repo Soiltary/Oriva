@@ -1,0 +1,18 @@
+import {call,sql,files,context} from './accounts.mjs';import assert from 'node:assert/strict';import {metadataCost,metadataFields,metadataQuota,objectQuota} from '../scripts/storage-quota-sql.mjs';
+const registered=await call('register','POST',{email:'quota-boundary@example.test',password:'Synthetic-storage-quota-28!'});assert.equal(registered.status,201);const cookie=registered.cookie,owner=registered.data.user.id;
+const usage=()=>sql.prepare('SELECT * FROM storage_usage WHERE user_id=?').get(owner);
+assert.equal(usage().metadata_bytes,0);assert.equal(usage().object_bytes,0);assert.equal(usage().object_census,1);
+sql.prepare('UPDATE storage_usage SET metadata_bytes=? WHERE user_id=?').run(metadataQuota-3000,owner);
+const race=await Promise.all(['a','b'].map(x=>call('items','POST',{url:'https://quota.example.test/'+x,title:'حد عربي'},cookie)));assert.deepEqual(race.map(x=>x.status).sort(),[201,413]);assert.ok(usage().metadata_bytes<=metadataQuota);
+const item=race.find(x=>x.status===201).data.item,old=sql.prepare('SELECT * FROM items WHERE id=?').get(item.id),oldHistory=sql.prepare('SELECT COUNT(*) n FROM item_revisions WHERE user_id=?').get(owner).n;
+sql.prepare('UPDATE storage_usage SET metadata_bytes=? WHERE user_id=?').run(metadataQuota-10,owner);
+const edit=await call('items/'+item.id,'PATCH',{revision:old.revision,note:'Must remain a local draft'},cookie);assert.equal(edit.status,413);assert.equal(edit.data.code,'account_storage_limit');assert.equal(sql.prepare('SELECT note FROM items WHERE id=?').get(item.id).note,old.note);assert.equal(sql.prepare('SELECT COUNT(*) n FROM item_revisions WHERE user_id=?').get(owner).n,oldHistory,'Quota failure rolls back the snapshot and edit together');
+const actualMetadata=()=>Object.keys(metadataFields).reduce((total,t)=>total+sql.prepare(`SELECT COALESCE(SUM(${metadataCost(t,'q')}),0) n FROM ${t} q WHERE user_id=?`).get(owner).n,0)+sql.prepare('SELECT COUNT(*)*2048 n FROM object_storage WHERE user_id=?').get(owner).n;
+sql.prepare('UPDATE storage_usage SET metadata_bytes=?,object_bytes=? WHERE user_id=?').run(actualMetadata(),objectQuota-2,owner);
+const upload=async label=>{const r=await context.exports.POST(new Request('https://oriva.test/api/files',{method:'POST',headers:{origin:'https://oriva.test',cookie,'x-file-name':label+'.bin'},body:Uint8Array.of(1,2)}));return {status:r.status,data:await r.json()}};
+const before=files.size,uploaded=await Promise.all(['one','two'].map(upload));assert.deepEqual(uploaded.map(x=>x.status).sort(),[201,413]);assert.equal(files.size,before+1,'Over-quota concurrent upload never writes R2');assert.equal(usage().object_bytes,objectQuota);
+sql.prepare('UPDATE storage_usage SET object_bytes=(SELECT COALESCE(SUM(bytes),0) FROM object_storage WHERE user_id=?) WHERE user_id=?').run(owner,owner);
+assert.equal(usage().metadata_bytes,actualMetadata(),'Trigger accounting equals a fresh full census after updates and uploads');
+const beforeDuplicate=usage().metadata_bytes;assert.equal((await call('items','POST',{url:old.url},cookie)).status,409);assert.equal(usage().metadata_bytes,beforeDuplicate,'Ignored/failed insert cannot double-charge');
+const storage=await call('storage','GET',undefined,cookie);assert.equal(storage.status,200);assert.equal(storage.data.limits.metadataBytes,32*1024*1024);assert.equal(storage.data.limits.objectBytes,512*1024*1024);
+console.log('PASS owner-approved 32MiB content/history and512MiB object quotas: atomic competing admissions, no rejected R2 write, edit/history rollback, exact trigger census, duplicate idempotency and visible limits.');

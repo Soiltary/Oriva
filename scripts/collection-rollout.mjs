@@ -1,12 +1,13 @@
 // Offline rollout preparation only: no live bindings, networking, CLI apply,
 // deployment configuration changes or migration-history writes.
 import fs from 'node:fs';import path from 'node:path';import {createHash} from 'node:crypto';
+import {storageQuotaTriggers,storageLifecycleUpgradeSQL} from './storage-quota-sql.mjs';
 const backfill="INSERT INTO collections(id,user_id,name,created,updated) SELECT lower(hex(randomblob(16))),user_id,collection,MIN(created),MAX(updated) FROM items WHERE length(trim(collection))>0 GROUP BY user_id,collection;";
 const sha=value=>createHash('sha256').update(value).digest('hex');
 export function schemaOnlyProposal(root){
  const directory=path.join(root,'drizzle'),names=fs.readdirSync(directory).filter(x=>/^\d{4}_.+\.sql$/.test(x)).sort();let separated=0;
  const migrations=names.map(name=>{const original=fs.readFileSync(path.join(directory,name)),statements=original.toString('utf8').split('--> statement-breakpoint').map(x=>x.trim()).filter(Boolean);
-  const schema=statements.filter(sql=>{if(name==='0004_workspace.sql'&&sql===backfill){separated++;return false;}if(!/^(?:CREATE (?:UNIQUE )?(?:TABLE|INDEX)|ALTER TABLE)\b/i.test(sql))throw new Error('Unreviewed migration statement: '+name);return true;});
+  const schema=statements.filter(sql=>{if(name==='0004_workspace.sql'&&sql===backfill){separated++;return false;}if(!/^(?:CREATE (?:UNIQUE )?(?:TABLE|INDEX)|ALTER TABLE)\b/i.test(sql)&&!(name==='0009_account_storage.sql'&&storageQuotaTriggers().includes(sql))&&!(name==='0010_storage_lifecycle.sql'&&storageLifecycleUpgradeSQL().includes(sql))&&!(name==='0012_file_reference_semantics.sql'&&storageLifecycleUpgradeSQL(false).includes(sql)))throw new Error('Unreviewed migration statement: '+name);return true;});
   return {name,sourceSha256:sha(original),statements:schema};});
  if(separated!==1)throw new Error('Expected exactly the reviewed collection backfill');
  return {status:'proposal-only',deploymentAuthorized:false,providerLedgerVerified:false,recoveryVerified:false,migrations,separatedBackfills:separated,requiredBeforeUse:['Verified paired provider recovery','Actual provider ledger proving each changed migration unapplied','Provider-supported pending migration repair and exact source packaging','Frozen isolated restoration and bounded backfill rehearsal']};
