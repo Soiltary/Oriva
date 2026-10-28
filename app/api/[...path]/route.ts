@@ -31,14 +31,23 @@ async function initializeObjectAccounting(userId:string){
  }while(cursor);
  await db().prepare('UPDATE storage_usage SET object_census=1 WHERE user_id=?').bind(userId).run();
 }
-async function storeObject(userId:string,key:string,bytes:Uint8Array,options:R2PutOptions){
+async function storeObject(userId:string,key:string,bytes:Uint8Array,options:R2PutOptions,restore?:{session:string;source:string}){
  if(!key.startsWith(userId+'/')||!/^(?:files\/)?[0-9a-f-]{36}$/.test(key.slice(userId.length+1)))fail('Invalid storage object key');
  await initializeObjectAccounting(userId);
  const existing=await db().prepare('SELECT state FROM object_storage WHERE key=? AND user_id=?').bind(key,userId).first<{state:string}>();if(existing?.state==='ready')return;
- const reserved=await db().prepare("INSERT INTO object_storage(key,user_id,bytes,state,updated) VALUES(?,?,?,'pending',?) ON CONFLICT(key) DO UPDATE SET bytes=excluded.bytes,state='pending',updated=excluded.updated WHERE object_storage.user_id=excluded.user_id AND object_storage.state='failed'").bind(key,userId,bytes.byteLength,now()).run();
- if(!reserved.meta.changes)fail('Upload was canceled during cleanup',409);
- try{await bucket().put(key,bytes,options);}catch(e){await db().prepare("UPDATE object_storage SET state='failed',updated=? WHERE key=? AND state='pending'").bind(now(),key).run();throw e;}
- const saved=await db().prepare("UPDATE object_storage SET state='ready',updated=? WHERE key=? AND state NOT IN ('purging','purged')").bind(now(),key).run();
+ const operation=crypto.randomUUID();
+ // A canceled restore mapping rotates its object UUID before bytes are
+ // deleted. A stale commit cannot reserve or recreate that retired key.
+ const mappingGuard=restore?" AND EXISTS(SELECT 1 FROM restore_maps m JOIN restore_sessions s ON s.id=m.session_id WHERE m.session_id=? AND m.kind='blob' AND m.source_id=? AND m.target_id=? AND s.user_id=?)":'';
+ const reserved=await db().prepare("INSERT OR IGNORE INTO object_storage(key,user_id,bytes,state,updated,operation_id,write_protocol) SELECT ?,?,?,'pending',?,?,'multipart-v1' WHERE 1=1"+mappingGuard).bind(key,userId,bytes.byteLength,now(),operation,...(restore?[restore.session,restore.source,key.slice(-36),userId]:[])).run();
+ if(!reserved.meta.changes)fail('Upload is pending or canceled. Clean unused uploads before retrying.',409);
+ let upload:R2MultipartUpload|undefined;
+ try{
+  upload=await bucket().createMultipartUpload(key,options);
+  const recorded=await db().prepare("UPDATE object_storage SET upload_id=? WHERE key=? AND operation_id=? AND state='pending'").bind(upload.uploadId,key,operation).run();if(!recorded.meta.changes)fail('Upload was canceled during cleanup',409);
+  const part=await upload.uploadPart(1,bytes);await upload.complete([part]);
+ }catch(e){if(upload)await upload.abort().catch(()=>{});const failed=await db().prepare("UPDATE object_storage SET state='failed',updated=? WHERE key=? AND operation_id=? AND state='pending'").bind(now(),key,operation).run();if(!failed.meta.changes)fail('Upload was canceled during cleanup',409);throw e;}
+ const saved=await db().prepare("UPDATE object_storage SET state='ready',updated=? WHERE key=? AND operation_id=? AND state='pending'").bind(now(),key,operation).run();
  if(!saved.meta.changes){await bucket().delete(key);fail('Upload was canceled during cleanup',409);}
 }
 async function objectReferenced(userId:string,key:string){
@@ -46,12 +55,20 @@ async function objectReferenced(userId:string,key:string){
  return !!await db().prepare("SELECT id FROM items WHERE user_id=?1 AND (file_key=?2 OR image=?2 OR instr(body,?3)>0 OR instr(body,?4)>0) UNION ALL SELECT id FROM collections WHERE user_id=?1 AND image=?2 UNION ALL SELECT id FROM attachments WHERE user_id=?1 AND id=?2 UNION ALL SELECT item_id FROM item_revisions WHERE user_id=?1 AND (json_extract(snapshot,'$.file_key')=?2 OR json_extract(snapshot,'$.image')=?2 OR instr(COALESCE(json_extract(snapshot,'$.body'),''),?3)>0 OR instr(COALESCE(json_extract(snapshot,'$.body'),''),?4)>0) UNION ALL SELECT user_id FROM preferences WHERE user_id=?1 AND (instr(data,?3)>0 OR instr(data,?4)>0) LIMIT 1").bind(userId,id,imagePath,filePath).first();
 }
 async function deleteStoredObject(key:string){
- const entry=await db().prepare('SELECT user_id,state FROM object_storage WHERE key=?').bind(key).first<{user_id:string;state:string}>();if(!entry)return false;
- // Fence new references before inspecting existing references. Never reclaim
- // an active writer: R2 can commit bytes even when its response later fails.
- const claimed=await db().prepare("UPDATE object_storage SET state='purging',updated=? WHERE key=? AND state IN ('ready','failed')").bind(now(),key).run();if(!claimed.meta.changes)return false;
+ const entry=await db().prepare('SELECT user_id,state,write_protocol FROM object_storage WHERE key=?').bind(key).first<{user_id:string;state:string;write_protocol:string}>();if(!entry)return false;
+ // Old development-only single PUTs have no cancellation handle. Never free
+ // their unknown pending writes by guessing a timeout. New writes are abortable.
+ if(entry.state!=='ready'&&entry.write_protocol!=='multipart-v1')return false;
+ // A reconstructed blob is already owned by its active restore, even before
+ // the following item record has attached it. Do not strand that forward step.
+ if(entry.state==='ready'&&await db().prepare("SELECT 1 FROM restore_maps m JOIN restore_sessions s ON s.id=m.session_id WHERE m.kind='blob' AND m.target_id=? AND s.user_id=? AND s.state IN ('ready','committing') AND s.cleanup_state='' LIMIT 1").bind(key.slice(-36),entry.user_id).first())return false;
+ const claimed=await db().prepare("UPDATE object_storage SET state='purging',updated=? WHERE key=? AND state=? AND (state IN ('ready','failed','pending') OR (state='purging' AND updated<=?))").bind(now(),key,entry.state,now()-60).run();if(!claimed.meta.changes)return false;
  if(await objectReferenced(entry.user_id,key)){await db().prepare("UPDATE object_storage SET state='ready',updated=? WHERE key=? AND state='purging'").bind(now(),key).run();return false;}
- try{await bucket().delete(key);}catch(e){await db().prepare("UPDATE object_storage SET state='failed',updated=? WHERE key=? AND state='purging'").bind(now(),key).run();throw e;}
+ // Rotation is durable before any abort/delete. Even an interrupted cleanup
+ // that later resumes can only delete the retired UUID, never its replacement.
+ await db().prepare("UPDATE restore_maps SET target_id=? WHERE kind='blob' AND target_id=? AND session_id IN (SELECT id FROM restore_sessions WHERE user_id=?)").bind(crypto.randomUUID(),key.slice(-36),entry.user_id).run();
+ const current=await db().prepare('SELECT upload_id FROM object_storage WHERE key=?').bind(key).first<{upload_id:string}>();
+ try{if(current?.upload_id){try{await bucket().resumeMultipartUpload(key,current.upload_id).abort();}catch(e){if(!/(?:NoSuchUpload|\b10024\b)/.test((e as Error).message))throw e;}}await bucket().delete(key);}catch(e){await db().prepare("UPDATE object_storage SET state='failed',updated=? WHERE key=? AND state='purging'").bind(now(),key).run();throw e;}
  await db().prepare("DELETE FROM object_storage WHERE key=? AND state='purging'").bind(key).run();return true;
 }
 
@@ -277,7 +294,7 @@ async function handle(req:Request){try{
    const mappedBody=(body:unknown)=>remapBackupText(contentBody(body),state.source_owner,map);
    if(record.type==='blob'&&record.chunk===record.chunks-1){
     const mapping=await map('blob',record.sourceKey);if(!mapping)fail('Missing object mapping');const metadata=JSON.parse(mapping.data),chunks=(await db().prepare("SELECT data FROM restore_records WHERE session_id=? AND type='blob' AND json_extract(data,'$.sourceKey')=? ORDER BY CAST(json_extract(data,'$.chunk') AS INTEGER)").bind(id,record.sourceKey).all<{data:string}>()).results;
-    if(chunks.length!==record.chunks)fail('Backup object is incomplete');const bytes=new Uint8Array(record.size);let offset=0;for(let i=0;i<chunks.length;i++){const chunk=JSON.parse(chunks[i].data);if(chunk.chunk!==i||chunk.size!==record.size)fail('Backup object order is invalid');const stored=await bucket().get(chunk.chunkKey);if(!stored)fail('Staged object is missing');const data=new Uint8Array(await new Response(stored.body).arrayBuffer());if(offset+data.length>bytes.length||hex(await crypto.subtle.digest('SHA-256',data))!==chunk.sha256)fail('Staged object failed integrity check');bytes.set(data,offset);offset+=data.length}if(offset!==bytes.length)fail('Backup object length mismatch');if(metadata.kind==='image'){const mime=String(metadata.mime),valid=mime==='image/png'?[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v):mime==='image/jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:mime==='image/webp'&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP';if(!valid||bytes.length>2_000_000)fail('Invalid image in backup');}await storeObject(user.id,user.id+'/'+(metadata.kind==='file'?'files/':'')+mapping.target_id,bytes,{httpMetadata:{contentType:metadata.kind==='image'?metadata.mime:'application/octet-stream'}});
+    if(chunks.length!==record.chunks)fail('Backup object is incomplete');const bytes=new Uint8Array(record.size);let offset=0;for(let i=0;i<chunks.length;i++){const chunk=JSON.parse(chunks[i].data);if(chunk.chunk!==i||chunk.size!==record.size)fail('Backup object order is invalid');const stored=await bucket().get(chunk.chunkKey);if(!stored)fail('Staged object is missing');const data=new Uint8Array(await new Response(stored.body).arrayBuffer());if(offset+data.length>bytes.length||hex(await crypto.subtle.digest('SHA-256',data))!==chunk.sha256)fail('Staged object failed integrity check');bytes.set(data,offset);offset+=data.length}if(offset!==bytes.length)fail('Backup object length mismatch');if(metadata.kind==='image'){const mime=String(metadata.mime),valid=mime==='image/png'?[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v):mime==='image/jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:mime==='image/webp'&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP';if(!valid||bytes.length>2_000_000)fail('Invalid image in backup');}await storeObject(user.id,user.id+'/'+(metadata.kind==='file'?'files/':'')+mapping.target_id,bytes,{httpMetadata:{contentType:metadata.kind==='image'?metadata.mime:'application/octet-stream'}},{session:id,source:record.sourceKey});
    }else if(record.type==='collection'){
     const name=value(row.name,80);if(!name)fail('Invalid collection in backup');const existing=await db().prepare('SELECT id FROM collections WHERE user_id=? AND name=?').bind(user.id,name).first<{id:string}>(),mapping=await map('collection',row.id);if(!mapping)fail('Missing collection mapping');
     if(existing&&existing.id!==mapping.target_id)await db().prepare('UPDATE restore_maps SET target_id=?,data=? WHERE session_id=? AND kind=? AND source_id=?').bind(existing.id,'{"skipped":true}',id,'collection',row.id).run();else if(existing){}else{const parent=row.parent_id?(await map('collection',row.parent_id))?.target_id||'':'';await db().prepare('INSERT OR IGNORE INTO collections(id,user_id,name,parent_id,icon,color,image,created,updated) VALUES(?,?,?,?,?,?,?,?,?)').bind(mapping.target_id,user.id,name,parent,value(row.icon,40),/^#[a-f0-9]{6}$/i.test(row.color)?row.color:'#a98af4','',Number(row.created)||now(),Number(row.updated)||now()).run();}

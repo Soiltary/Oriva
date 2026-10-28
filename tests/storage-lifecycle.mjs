@@ -35,15 +35,14 @@ assert.ok(sql.prepare('SELECT metadata_bytes FROM storage_usage WHERE user_id=?'
 sql.prepare('UPDATE storage_usage SET metadata_bytes=0 WHERE user_id=?').run(owner);
 assert.equal((await call('import','POST',{items:[{url:'https://quota.test/import',collection:'Imported'}]},cookie)).status,200);
 assert.match(sql.prepare('SELECT id FROM collections WHERE user_id=?').get(owner).id,/^[0-9a-f-]{36}$/);
-// Active writes cannot release their reservation; a write-then-throw remains
-// charged and discoverable until it settles and explicit cleanup succeeds.
+// Durable multipart cancellation defeats a late completion and even an
+// ambiguous write response after owner-confirmed cleanup.
 let release,entered;const started=new Promise(resolve=>entered=resolve),gate=new Promise(resolve=>release=resolve);
 context.__env.BUCKET.put=async(...args)=>{entered();await gate;await put(...args);throw new Error('Synthetic write succeeded but response failed')};
 const pending=upload();await started;
 const inFlight=(await call('storage/orphans','GET',undefined,cookie)).data.objects[0].key;
-const waiting=await call('storage/cleanup','POST',{confirm:true,keys:[inFlight]},cookie);assert.deepEqual(waiting.data.retained,[inFlight]);
-release();assert.equal((await pending).status,500);assert.equal(files.has(inFlight),true);assert.equal(sql.prepare('SELECT bytes FROM object_storage WHERE key=?').get(inFlight).bytes,2,'Ambiguous writes stay charged and discoverable');
-assert.equal((await call('storage/cleanup','POST',{confirm:true,keys:[inFlight]},cookie)).status,200);assert.equal(files.has(inFlight),false);assert.equal(sql.prepare('SELECT key FROM object_storage WHERE key=?').get(inFlight),undefined,'No permanent uncharged tombstone');
+const waiting=await call('storage/cleanup','POST',{confirm:true,keys:[inFlight]},cookie);assert.deepEqual(waiting.data.cleaned,[inFlight]);
+release();assert.equal((await pending).status,409);assert.equal(files.has(inFlight),false);assert.equal(sql.prepare('SELECT key FROM object_storage WHERE key=?').get(inFlight),undefined,'Aborted upload cannot recreate bytes or retain an uncharged tombstone');
 context.__env.BUCKET.put=put;
 // Existing saved references and revision-only cover images survive cleanup.
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1X8AAAAASUVORK5CYII=';

@@ -4,6 +4,8 @@ export function storageErrorMessage(error:unknown,lang:'ar'|'en'){
  const message=typeof error==='string'?error:(error as {message?:string})?.message||'Request failed';
  if(lang==='ar'&&message==='Account content storage limit reached')return 'بلغ المحتوى وسجل الإصدارات حد 32 MiB. احتُفظ بالمسودة؛ لم تُحفظ التغييرات.';
  if(lang==='ar'&&message==='Account file storage limit reached')return 'بلغت الملفات والصور حد التخزين المسموح للحساب (512 MiB)، أو امتلأت مساحة بياناتها الوصفية. لم يكتمل الحفظ.';
+ if(lang==='ar'&&message==='Upload is pending or canceled. Clean unused uploads before retrying.')return 'الرفع معلّق أو مُلغى. افتح إدارة مساحة الحساب ونظّف الرفوع غير المستخدمة ثم أعد المحاولة.';
+ if(lang==='ar'&&message==='Upload was canceled during cleanup')return 'أُلغي الرفع أثناء تنظيف المساحة. احتُفظ بالمحتوى؛ أعد الرفع عند الحاجة.';
  return message;
 }
 
