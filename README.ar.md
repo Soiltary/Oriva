@@ -1,4 +1,5 @@
 [English](README.md) | [العربية](README.ar.md)
+تجهيز ترحيل الموقع الحالي: [العربية](docs/hosting-preparation.ar.md) | [English](docs/hosting-preparation.md).
 
 # Oriva
 

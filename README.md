@@ -1,4 +1,5 @@
 [English](README.md) | [العربية](README.ar.md)
+Existing Site migration preparation: [English](docs/hosting-preparation.md) | [العربية](docs/hosting-preparation.ar.md).
 
 # Oriva
 

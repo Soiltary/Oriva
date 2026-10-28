@@ -1,0 +1,17 @@
+# Existing Site migration preparation
+
+[العربية](hosting-preparation.ar.md)
+
+This is preparation for the first public release, not a deployment or Stable announcement. The existing hosted source has three original migrations and four application tables. The development source has a longer history; its whole migration directory must not be copied onto the hosted baseline.
+
+`scripts/hosting-migration-stream.mjs` prepares a separate directory containing the original migrations/snapshots 0–2 and their unchanged journal entries, followed by one schema-only bridge. It verifies the complete baseline inventory and journal, refuses altered or extra files, and claims a new destination exclusively so concurrent preparation cannot overwrite another result. The destination parent must already exist. Existing output is never replaced. It does not connect to Sites, apply SQL, delete data, backfill collections, authorize deployment or claim that the provider ledger was inspected.
+
+The bridge adds 11 tables, constant-default columns, indexes and accounting/reference triggers. An actual isolated D1/R2 rehearsal preserved every original synthetic account/item field and original file hash. The new API then passed original-account login, session continuity, object census, library retrieval, revision edits/conflicts, article creation, exact file download and account isolation.
+
+For incident containment, the existing current API supports `ORIVA_LIBRARY_READ_ONLY=1`. Local runtime verification kept login, library reads, complete account backup and logout available while rejecting newly admitted item deletion with503. This is not an in-flight drain, data restoration or provider backup. Returning unrestricted library writes to the old API would bypass the new concurrency contract and could remove objects needed by revisions; use schema-compatible containment and a forward repair instead. A contained old-code read-only rehearsal also preserved data, but no such production fallback has been deployed.
+
+The local 29-suite regression, separate hosting-stream regression, TypeScript and hosted-candidate web build passed. Existing full-account/interruption evidence still matches the unchanged application API and storage generators. Preparation-integrity findings about unlisted migrations and concurrent output writers were reproduced, fixed and regression-tested.
+
+Before production deployment, verify the actual provider migration ledger against the retained baseline and verify the packaged archive's migration inventory. Current Sites tools expose application table names and code versions, but not the internal ledger or a complete paired D1/R2 backup/isolated restoration operation. No library export substitutes for those capabilities. For this first launch there are no external customers or valuable development content to migrate; preserve the existing resources and owner installation nevertheless. A project-scoped provider confirmation of migration provenance remains the minimum external step for the blocked deployment. Do not reset resources to evade that check.
+
+Application backups recover an account's supported content/files within the published allowance. They do not recover authentication secrets, all other accounts, provider configuration or unknown untracked objects. Keep private backup artifacts out of the public source repository. Windows installed-update/installer acceptance and final GitHub asset publication remain separate release checks.
