@@ -1,5 +1,8 @@
 [English](migration-rollout.md) | [العربية](migration-rollout.ar.md)
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 # Collection migration preparation
 
 The release still requires verified provider recovery and the actual hosted migration ledger. This work resolves local migration-tool hazards and validates a separated schema/backfill proposal. **It does not repair or activate the hosted migration chain.** Existing SQL, journal and snapshot files remain byte-for-byte unchanged.

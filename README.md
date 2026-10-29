@@ -5,21 +5,21 @@ Existing Site migration preparation: [English](docs/hosting-preparation.md) | [�
 
 Current first-release limits, verified recovery and remaining gates: [storage and recovery status](docs/storage-recovery-status.md).
 
-**Windows download status:** no Stable Windows package is available yet. The API compatibility gate was reproduced using isolated synthetic data; see [Windows release verification](docs/windows-release-status.md).
+**Current release status:** compatible Sites18 is deployed and synthetic production acceptance passed. No Stable Windows asset is published yet. See [current acceptance](docs/release-acceptance.md) and [Windows status](docs/windows-release-status.md).
 
-The latest [deployment and recovery decision](docs/deployment-safety.md) records the exact schema differences, tested write containment and remaining recovery/legacy-client gates. The [collection rollout preparation](docs/migration-rollout.md) now includes a bounded, replay-safe backfill proposal and immutable history checks; production activation remains gated.
+The historical [deployment and recovery decision](docs/deployment-safety.md) records schema differences and containment; [current acceptance](docs/release-acceptance.md) supersedes earlier blockers. The [collection rollout preparation](docs/migration-rollout.md) now includes a bounded, replay-safe backfill proposal and immutable history checks; production activation remains gated.
 
 The [hands-on QA follow-up](docs/qa-followup.md) fixes restore retry/localization and native Arabic logout layout, with actual interface evidence and explicit large-library limits.
 
 ![Oriva](public/oriva-logo.png)
 
-**Oriva 1.0.0 is the first official release identity. This repository contains its reviewed release preparation; no Stable binary release or matching production deployment is claimed until the recovery and compatibility gates pass.** Historical 1.5.3/1.6.0 identifiers describe internal development, not earlier official public releases.
+**Oriva 1.0.0 is the first official release identity. This repository contains its reviewed release preparation; the matching API is now deployed, while the Stable Windows binary remains pending final acceptance and asset publication.** Historical 1.5.3/1.6.0 identifiers describe internal development, not earlier official public releases.
 
 Oriva is a personal digital library for links, files, articles, code snippets and the notes that help you find them again. It keeps the existing native Win32 application and the shared desktop/mobile website. It does not replace them with a new architecture.
 
 [Desktop website](https://oriva.soltairy.chatgpt.site/) · [Mobile website](https://oriva.soltairy.chatgpt.site/iphone) · [Repository](https://github.com/Soiltary/Oriva) · [Windows releases](https://github.com/Soiltary/Oriva/releases)
 
-The existing website may still run the historical deployment. The releases page is the authoritative destination for future verified Windows assets; a v1.0.0 asset is not available merely because source is public.
+The existing website now runs the compatible version18 deployment. The releases page is the authoritative destination for future verified Windows assets; a v1.0.0 asset is not available merely because source is public.
 
 ## Features and platform coverage
 

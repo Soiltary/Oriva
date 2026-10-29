@@ -1,5 +1,8 @@
 # First public release strategy
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 [العربية](first-release-strategy.ar.md)
 
 The owner confirmed on2026-10-28 that Oriva has no external users, no supported public1.5.3 installed base and no valuable content in its development accounts. The first official product release is1.0.0 in the existing Oriva Site/repository under MIT. Preserve existing code, history, installed development software and current resources. Existing-resource deletion/reset still requires exact target/impact confirmation.

@@ -1,5 +1,8 @@
 # Storage and first-release recovery status
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 [العربية](storage-recovery-status.ar.md)
 
 This is release preparation, **not a Stable release announcement**. No verified Windows download or matching production deployment is claimed.

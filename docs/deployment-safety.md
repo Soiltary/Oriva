@@ -1,5 +1,8 @@
 [English](deployment-safety.md) | [العربية](deployment-safety.ar.md)
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 # Deployment and recovery decision — 2026-10-24
 
 **Hold production deployment, migrations and the v1.0.0 Stable binary.** Safe source preparation continues from public checkpoint `4347620`. No production environment, account, file, feed or deployment was changed. The work runs on the owner's local Windows PC, using synthetic local test data.

@@ -1,5 +1,8 @@
 # Backup and recovery for Sites-managed Oriva
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 ## Current decision
 
 **Production migrations, API deployment and the Stable binary release are on hold.** The owner confirms that D1 and R2 are managed by ChatGPT Sites and that no independently verified provider recovery copy exists. No direct Cloudflare credentials are assumed or requested.

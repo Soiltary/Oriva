@@ -1,5 +1,8 @@
 # Native verification follow-up — 2026-10-28
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 [العربية](native-verification.ar.md) · [English README](../README.md)
 
 Source preparation continues. No Stable release, official Windows download, production migration, deployment or update-feed activation is authorized by these results.

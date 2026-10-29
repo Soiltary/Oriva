@@ -1,5 +1,8 @@
 # Existing Site migration preparation
 
+> Update,29 October2026: compatible Sites18 is deployed; synthetic production API acceptance and isolated guest installation/update passed. [Current release acceptance](release-acceptance.md) supersedes older dated non-deployment/blocker statements below. This does not claim a Stable binary release.
+
+
 [العربية](hosting-preparation.ar.md)
 
 This is preparation for the first public release, not a deployment or Stable announcement. The existing hosted source has three original migrations and four application tables. The development source has a longer history; its whole migration directory must not be copied onto the hosted baseline.

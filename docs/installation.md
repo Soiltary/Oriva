@@ -1,5 +1,8 @@
 # Installation
 
+> Current status: the compatible API is deployed; actual installation/update passed in an isolated guest only. No Stable package is published. [Current acceptance](release-acceptance.md) supersedes historical unrun/undeployed statements below.
+
+
 Windows 10/11 x64 is the intended native target. No bundled browser engine, Python or .NET runtime is needed. Internet access is needed for cloud operations. The prepared executable is **unsigned**; checksums detect changed bytes but are not independent publisher authentication. Do not bypass Windows security warnings.
 
 Only install a verified official package after it appears on the releases page. Download the ZIP and SHA256SUMS.txt, verify its exact SHA-256, extract the complete package and run its included Setup.cmd in your own Windows profile. The existing installer adds shortcuts and optional Explorer integration without administrator elevation. These instructions describe the preserved installer; the new candidate's installed update/registry flow has not been exercised.
