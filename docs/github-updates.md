@@ -15,3 +15,6 @@ The existing installer/updater still verifies staged bytes, preserves the instal
 Internal1.5.3 and earlier unshipped candidates contain fixed Sites update endpoints. Their executable code cannot be redirected to GitHub without installing a new client or changing their old Sites feed. For this first launch, manually installing the verified GitHub ZIP is the supported bootstrap. It preserves the same per-user profile/DPAPI session and monotonic update ordering; it does not replace the owner's installation automatically. New1.0.0 clients then use GitHub independently of Sites publishing. The website already links to the existing GitHub releases page. A cosmetic direct-version link is optional; changing Sites is not required for new-client update delivery once actual GitHub acceptance passes.
 
 Implementation, synthetic adversarial tests and final real-network/guest acceptance are tracked separately in the current release record. Do not claim real GitHub delivery or Stable publication until they actually pass.
+
+
+Verified30October2026: published Stable/Latest, actual anonymous API/CDN downloads and exact hashes passed. Public ZIP installation, real older GitHub-aware QA GUI update/relaunch and separate shipping-client Stable detection passed. See [current acceptance](release-acceptance.md).
