@@ -1,4 +1,7 @@
 [English](README.md) | [العربية](README.ar.md)
+
+GitHub updater transition: [English](docs/github-updates.md) | [العربية](docs/github-updates.ar.md). New-client delivery no longer requires Sites file publication once real-network acceptance passes.
+
 Existing Site migration preparation: [English](docs/hosting-preparation.md) | [العربية](docs/hosting-preparation.ar.md).
 
 # Oriva

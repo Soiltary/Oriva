@@ -1,4 +1,7 @@
 [English](README.md) | [العربية](README.ar.md)
+
+انتقال المحدّث إلى GitHub: [العربية](docs/github-updates.ar.md) | [English](docs/github-updates.md). لا يتطلب تسليم العميل الجديد نشر ملفات Sites بعد نجاح قبول الشبكة الفعلي.
+
 تجهيز ترحيل الموقع الحالي: [العربية](docs/hosting-preparation.ar.md) | [English](docs/hosting-preparation.md).
 
 # Oriva
