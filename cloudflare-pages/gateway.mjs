@@ -19,6 +19,10 @@ export async function gateway(request,fetcher=fetch){
  let response;
  try{response=await fetcher(UPSTREAM+current.pathname+current.search,init);}catch{return jsonError('The existing Oriva data service is temporarily unavailable',502);}
  const resultHeaders=new Headers(response.headers);
+ // Do not expose hosting-provider cookies on the new application origin.
+ const cookies=typeof response.headers.getSetCookie==='function'?response.headers.getSetCookie():response.headers.getAll('Set-Cookie');
+ resultHeaders.delete('set-cookie');
+ for(const cookie of cookies)if(cookie.startsWith('__Host-oriva='))resultHeaders.append('set-cookie',cookie);
  resultHeaders.set('cache-control','private, no-store');
  resultHeaders.set('x-content-type-options','nosniff');
  resultHeaders.delete('access-control-allow-origin');
