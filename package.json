@@ -6,6 +6,9 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "pages:build": "node cloudflare-pages/build.mjs",
+    "pages:deploy": "node cloudflare-pages/deploy.mjs",
+    "pages:test": "node --test tests/cloudflare-gateway.test.mjs",
     "dev": "node scripts/run-framework.mjs dev",
     "build": "node scripts/run-framework.mjs build",
     "start": "wrangler dev --config wrangler.local.json --local --persist-to work/local-data --ip 127.0.0.1 --port 5190 --inspector-port 0",

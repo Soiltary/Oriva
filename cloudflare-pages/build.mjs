@@ -1,0 +1,13 @@
+import {spawnSync} from 'node:child_process';
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const here=path.dirname(fileURLToPath(import.meta.url)),root=path.dirname(here);
+const cli=path.join(root,'node_modules/vite/bin/vite.js');
+const result=spawnSync(process.execPath,[cli,'build','--config',path.join(here,'vite.config.ts')],{cwd:root,stdio:'inherit'});
+if(result.error)throw result.error;if(result.status!==0)process.exit(result.status??1);
+const out=path.join(root,'pages-dist');
+fs.copyFileSync(path.join(here,'gateway.mjs'),path.join(out,'_worker.js'));
+fs.writeFileSync(path.join(out,'_routes.json'),JSON.stringify({version:1,include:['/api','/api/*'],exclude:[]},null,2));
+fs.writeFileSync(path.join(out,'_headers'),'/oriva-sw.js\n  Cache-Control: no-cache\n');
+fs.writeFileSync(path.join(out,'robots.txt'),'User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: https://oriva-library.pages.dev/sitemap.xml\n');
+fs.writeFileSync(path.join(out,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://oriva-library.pages.dev/</loc></url><url><loc>https://oriva-library.pages.dev/iphone/</loc></url></urlset>');
+console.log('Prepared the original Oriva React application plus a same-origin gateway to the retained Sites18 API. No database migrations or resource bindings.');
